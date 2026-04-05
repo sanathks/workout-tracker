@@ -94,7 +94,7 @@ export default function Dashboard({ onStartWorkout, onResumeSession, onNavigate 
                   style={{
                     width: '100%', padding: '16px 20px', background: 'none',
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    textAlign: 'left', minHeight: '48px',
+                    textAlign: 'left', minHeight: '48px', color: 'var(--text)',
                   }}
                 >
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
