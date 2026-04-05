@@ -88,21 +88,6 @@ export default function App() {
             <span>Home</span>
           </button>
 
-          {/* Centre FAB — start workout (uses suggested next day) */}
-          <button
-            onClick={() => { setWorkoutDayIndex(null); setScreen('workout'); }}
-            style={{
-              background: 'var(--primary)', color: '#000',
-              width: '60px', height: '60px', borderRadius: '50%',
-              fontSize: '1.6rem', fontWeight: '700',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginTop: '-20px',
-              boxShadow: '0 4px 20px rgba(74,222,128,0.4)',
-            }}
-          >
-            +
-          </button>
-
           <button
             className={`nav-item ${tab === 'history' ? 'active' : ''}`}
             onClick={() => navigate('history')}
