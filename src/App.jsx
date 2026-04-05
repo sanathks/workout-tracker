@@ -1,0 +1,101 @@
+import { useState, useEffect } from 'react';
+import { isLoggedIn, pullFromCloud, pullRecommendationsFromCloud } from './utils/storage';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import WorkoutSession from './pages/WorkoutSession';
+import History from './pages/History';
+import Settings from './pages/Settings';
+
+export default function App() {
+  const [loggedIn, setLoggedIn] = useState(isLoggedIn());
+  const [screen, setScreen]     = useState('dashboard');
+  const [tab, setTab]           = useState('dashboard');
+  const [syncing, setSyncing]   = useState(false);
+
+  // On login: pull latest data from GitHub (works across all devices)
+  useEffect(() => {
+    if (!loggedIn) return;
+    setSyncing(true);
+    Promise.all([pullFromCloud(), pullRecommendationsFromCloud()])
+      .finally(() => setSyncing(false));
+  }, [loggedIn]);
+
+  const handleLogin = () => {
+    setLoggedIn(true);
+  };
+
+  if (!loggedIn) {
+    return <Login onLogin={handleLogin} />;
+  }
+
+  const navigate = (s) => {
+    setScreen(s);
+    if (['dashboard', 'history', 'settings'].includes(s)) setTab(s);
+  };
+
+  return (
+    <div style={{ minHeight: '100vh' }}>
+
+      {/* Sync indicator (top of screen) */}
+      {syncing && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
+          background: 'rgba(251,191,36,0.15)',
+          borderBottom: '1px solid #fbbf24',
+          padding: '6px 16px',
+          fontSize: '0.75rem', color: '#fbbf24', fontWeight: '600',
+          textAlign: 'center',
+        }}>
+          🔄 Syncing data from GitHub...
+        </div>
+      )}
+
+      {screen === 'dashboard' && (
+        <Dashboard onStartWorkout={() => setScreen('workout')} onNavigate={navigate} />
+      )}
+      {screen === 'workout' && (
+        <WorkoutSession onComplete={() => navigate('dashboard')} />
+      )}
+      {screen === 'history'  && <History />}
+      {screen === 'settings' && (
+        <Settings onLogout={() => { setLoggedIn(false); setScreen('dashboard'); }} />
+      )}
+
+      {/* Bottom Nav (hidden during active workout) */}
+      {screen !== 'workout' && (
+        <nav className="nav-bar">
+          <button
+            className={`nav-item ${tab === 'dashboard' ? 'active' : ''}`}
+            onClick={() => navigate('dashboard')}
+          >
+            <span>🏠</span>
+            <span>Home</span>
+          </button>
+
+          {/* Centre FAB — start workout */}
+          <button
+            onClick={() => navigate('workout')}
+            style={{
+              background: 'var(--primary)', color: '#000',
+              width: '60px', height: '60px', borderRadius: '50%',
+              fontSize: '1.6rem', fontWeight: '700',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              marginTop: '-20px',
+              boxShadow: '0 4px 20px rgba(74,222,128,0.4)',
+            }}
+          >
+            +
+          </button>
+
+          <button
+            className={`nav-item ${tab === 'history' ? 'active' : ''}`}
+            onClick={() => navigate('history')}
+          >
+            <span>📋</span>
+            <span>History</span>
+          </button>
+        </nav>
+      )}
+    </div>
+  );
+}
