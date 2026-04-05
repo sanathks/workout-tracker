@@ -60,6 +60,12 @@ export const saveSession = (session) => {
   enqueueSync('data', buildSnapshot());
 };
 
+export const deleteSession = (sessionId) => {
+  const sessions = getSessions().filter(s => s.id !== sessionId);
+  localStorage.setItem(KEYS.SESSIONS, JSON.stringify(sessions));
+  enqueueSync('data', buildSnapshot());
+};
+
 export const createSession = (week, dayIndex, dayData) => ({
   id: `${Date.now()}`,
   date: new Date().toISOString(),

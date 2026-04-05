@@ -3,7 +3,7 @@ import { workoutDays, weekConfig } from '../data/workoutPlan';
 import {
   getCurrentWeek, getCurrentDayIndex,
   createSession, saveSession, advanceToNextDay,
-  getRecommendedWeight, getSettings,
+  getRecommendedWeight, getSettings, getSessions,
 } from '../utils/storage';
 import { getSyncStatus } from '../utils/syncQueue';
 import { generateRecommendations } from '../utils/aiRecommendations';
@@ -15,14 +15,31 @@ const RATINGS = [
   { key: 'failed',   label: 'Failed',   emoji: '💀', color: '#f87171', desc: 'Missed some reps' },
 ];
 
-export default function WorkoutSession({ dayIndex: selectedDayIndex, onComplete }) {
+export default function WorkoutSession({ dayIndex: selectedDayIndex, resumeSessionId, onComplete }) {
   const week = getCurrentWeek();
-  const dayIndex = selectedDayIndex != null ? selectedDayIndex : getCurrentDayIndex();
+
+  // Resolve which session to load
+  const [session, setSession] = useState(() => {
+    if (resumeSessionId) {
+      const existing = getSessions().find(s => s.id === resumeSessionId);
+      if (existing) return existing;
+    }
+    const dayIdx = selectedDayIndex != null ? selectedDayIndex : getCurrentDayIndex();
+    return createSession(week, dayIdx, workoutDays[dayIdx]);
+  });
+
+  const dayIndex = session.dayIndex;
   const today = workoutDays[dayIndex];
   const wkCfg = weekConfig[week - 1];
 
-  const [session, setSession] = useState(() => createSession(week, dayIndex, today));
-  const [activeEx, setActiveEx] = useState(0);
+  // When resuming, jump to the first exercise that isn't fully rated yet
+  const [activeEx, setActiveEx] = useState(() => {
+    if (resumeSessionId) {
+      const idx = session.exercises.findIndex(ex => !ex.rating);
+      return idx >= 0 ? idx : 0;
+    }
+    return 0;
+  });
   const [phase, setPhase] = useState('logging'); // 'logging' | 'summary'
   const [analyzing, setAnalyzing] = useState(false);
   const [syncing, setSyncing] = useState(false);

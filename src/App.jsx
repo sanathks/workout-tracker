@@ -13,6 +13,7 @@ export default function App() {
   const [tab, setTab]           = useState('dashboard');
   const [syncing, setSyncing]   = useState(false);
   const [workoutDayIndex, setWorkoutDayIndex] = useState(null);
+  const [resumeSessionId, setResumeSessionId] = useState(null);
 
   // On login: pull latest data from GitHub (works across all devices)
   // If offline, this silently fails and we use local data
@@ -57,10 +58,19 @@ export default function App() {
       )}
 
       {screen === 'dashboard' && (
-        <Dashboard onStartWorkout={(dayIdx) => { setWorkoutDayIndex(dayIdx); setScreen('workout'); }} onNavigate={navigate} />
+        <Dashboard
+          onStartWorkout={(dayIdx) => { setWorkoutDayIndex(dayIdx); setResumeSessionId(null); setScreen('workout'); }}
+          onResumeSession={(sessionId) => { setResumeSessionId(sessionId); setWorkoutDayIndex(null); setScreen('workout'); }}
+          onNavigate={navigate}
+        />
       )}
       {screen === 'workout' && (
-        <WorkoutSession dayIndex={workoutDayIndex} onComplete={() => { setWorkoutDayIndex(null); navigate('dashboard'); }} />
+        <WorkoutSession
+          key={resumeSessionId || workoutDayIndex || 'new'}
+          dayIndex={workoutDayIndex}
+          resumeSessionId={resumeSessionId}
+          onComplete={() => { setWorkoutDayIndex(null); setResumeSessionId(null); navigate('dashboard'); }}
+        />
       )}
       {screen === 'history'  && <History />}
       {screen === 'settings' && (

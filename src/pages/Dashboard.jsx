@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { workoutDays, weekConfig } from '../data/workoutPlan';
-import { getCurrentWeek, getCurrentDayIndex, getSessions, getRecommendedWeight } from '../utils/storage';
+import { getCurrentWeek, getCurrentDayIndex, getSessions, getRecommendedWeight, deleteSession } from '../utils/storage';
 
-export default function Dashboard({ onStartWorkout, onNavigate }) {
+export default function Dashboard({ onStartWorkout, onResumeSession, onNavigate }) {
   const week = getCurrentWeek();
   const nextDayIndex = getCurrentDayIndex();
   const wkCfg = weekConfig[week - 1];
@@ -11,6 +11,16 @@ export default function Dashboard({ onStartWorkout, onNavigate }) {
   const progressPct = Math.round((completedSessions / 32) * 100);
 
   const [expandedDay, setExpandedDay] = useState(nextDayIndex);
+  const [, forceUpdate] = useState(0);
+  const refresh = () => forceUpdate(n => n + 1);
+
+  const handleDelete = (id, e) => {
+    e.stopPropagation();
+    if (confirm('Delete this session?')) {
+      deleteSession(id);
+      refresh();
+    }
+  };
 
   return (
     <div className="page gap-4">
@@ -136,32 +146,93 @@ export default function Dashboard({ onStartWorkout, onNavigate }) {
         </div>
       </div>
 
-      {/* Recent sessions */}
-      {sessions.length > 0 && (
-        <div>
-          <p style={{ color: 'var(--text-sub)', fontSize: '0.8rem', marginBottom: '12px', fontWeight: '600', letterSpacing: '0.05em' }}>RECENT SESSIONS</p>
-          <div className="gap-2">
-            {sessions.slice(-3).reverse().map(s => (
-              <div key={s.id} className="card" style={{ padding: '14px 16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <div>
-                    <p style={{ fontWeight: '600', fontSize: '0.9rem' }}>{s.dayName}</p>
-                    <p style={{ color: 'var(--text-sub)', fontSize: '0.8rem' }}>Week {s.week}</p>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>
-                      {new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </p>
-                    <span style={{ fontSize: '0.75rem', color: s.completed ? 'var(--primary)' : 'var(--warning)', fontWeight: '600' }}>
-                      {s.completed ? '✓ Done' : '● In Progress'}
-                    </span>
+      {/* In-progress sessions */}
+      {(() => {
+        const inProgress = sessions.filter(s => !s.completed);
+        if (inProgress.length === 0) return null;
+        return (
+          <div>
+            <p style={{ color: 'var(--text-sub)', fontSize: '0.8rem', marginBottom: '12px', fontWeight: '600', letterSpacing: '0.05em' }}>IN PROGRESS</p>
+            <div className="gap-2">
+              {inProgress.reverse().map(s => {
+                const doneCount = s.exercises.filter(e => e.rating).length;
+                const totalCount = s.exercises.length;
+                return (
+                  <button
+                    key={s.id}
+                    className="card"
+                    onClick={() => onResumeSession(s.id)}
+                    style={{ padding: '14px 16px', width: '100%', textAlign: 'left', borderColor: 'rgba(251,191,36,0.3)', cursor: 'pointer' }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <p style={{ fontWeight: '600', fontSize: '0.9rem' }}>{s.dayName}</p>
+                        <p style={{ color: 'var(--text-sub)', fontSize: '0.8rem' }}>
+                          Week {s.week} · {doneCount}/{totalCount} exercises
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button
+                          onClick={(e) => handleDelete(s.id, e)}
+                          style={{ background: 'none', color: 'var(--danger)', fontSize: '0.8rem', padding: '4px 8px', opacity: 0.7 }}
+                        >
+                          ✕
+                        </button>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--warning)', fontWeight: '600' }}>
+                          Resume →
+                        </span>
+                      </div>
+                    </div>
+                    {/* Mini progress bar */}
+                    <div style={{ marginTop: '10px', background: 'var(--surface2)', borderRadius: '100px', height: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: `${(doneCount / totalCount) * 100}%`, height: '100%', background: 'var(--warning)', borderRadius: '100px' }} />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Recent completed sessions */}
+      {(() => {
+        const completed = sessions.filter(s => s.completed);
+        if (completed.length === 0) return null;
+        return (
+          <div>
+            <p style={{ color: 'var(--text-sub)', fontSize: '0.8rem', marginBottom: '12px', fontWeight: '600', letterSpacing: '0.05em' }}>RECENT SESSIONS</p>
+            <div className="gap-2">
+              {completed.slice(-3).reverse().map(s => (
+                <div key={s.id} className="card" style={{ padding: '14px 16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div>
+                      <p style={{ fontWeight: '600', fontSize: '0.9rem' }}>{s.dayName}</p>
+                      <p style={{ color: 'var(--text-sub)', fontSize: '0.8rem' }}>Week {s.week}</p>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ textAlign: 'right' }}>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>
+                          {new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </p>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: '600' }}>
+                          ✓ Done
+                        </span>
+                      </div>
+                      <button
+                        onClick={(e) => handleDelete(s.id, e)}
+                        style={{ background: 'none', color: 'var(--danger)', fontSize: '0.8rem', padding: '4px 8px', opacity: 0.5 }}
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
