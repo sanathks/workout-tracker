@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { onSyncStatusChange, getSyncStatus, getPendingCount } from '../utils/syncQueue';
+import { CheckCircle, RefreshCw, Clock, AlertTriangle, WifiOff } from 'lucide-react';
 
 const STATUS_CONFIG = {
-  idle:    { icon: '✅', text: 'Synced',              color: 'var(--primary)',  bg: 'rgba(74,222,128,0.1)' },
-  syncing: { icon: '🔄', text: 'Syncing...',          color: '#fbbf24',        bg: 'rgba(251,191,36,0.1)' },
-  pending: { icon: '⏳', text: 'Sync pending',        color: '#fbbf24',        bg: 'rgba(251,191,36,0.1)' },
-  error:   { icon: '⚠️', text: 'Sync failed — retry', color: '#f87171',        bg: 'rgba(248,113,113,0.1)' },
-  offline: { icon: '📴', text: 'Offline',             color: 'var(--text-sub)', bg: 'rgba(136,136,136,0.1)' },
+  idle:    { Icon: CheckCircle,   text: 'Synced',              color: 'var(--primary)',  bg: 'rgba(74,222,128,0.1)' },
+  syncing: { Icon: RefreshCw,     text: 'Syncing...',          color: '#fbbf24',        bg: 'rgba(251,191,36,0.1)' },
+  pending: { Icon: Clock,         text: 'Sync pending',        color: '#fbbf24',        bg: 'rgba(251,191,36,0.1)' },
+  error:   { Icon: AlertTriangle, text: 'Sync failed — retry', color: '#f87171',        bg: 'rgba(248,113,113,0.1)' },
+  offline: { Icon: WifiOff,       text: 'Offline',             color: 'var(--text-sub)', bg: 'rgba(136,136,136,0.1)' },
 };
 
 export default function SyncStatus({ style }) {
@@ -18,11 +19,9 @@ export default function SyncStatus({ style }) {
     const unsub = onSyncStatusChange((s) => {
       setStatus(s);
       setPending(getPendingCount());
-      // Show briefly when syncing/synced
       setVisible(true);
     });
 
-    // Also listen for online/offline
     const handleOnline = () => setStatus(getSyncStatus());
     const handleOffline = () => setStatus('offline');
     window.addEventListener('online', handleOnline);
@@ -35,7 +34,6 @@ export default function SyncStatus({ style }) {
     };
   }, []);
 
-  // Auto-hide after 3s for idle/synced status
   useEffect(() => {
     if (status === 'idle' && visible) {
       const t = setTimeout(() => setVisible(false), 3000);
@@ -44,10 +42,10 @@ export default function SyncStatus({ style }) {
     if (status !== 'idle') setVisible(true);
   }, [status, visible]);
 
-  // Always show offline or pending/error; briefly show synced
   if (!visible && status === 'idle') return null;
 
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.idle;
+  const Icon = cfg.Icon;
 
   return (
     <div style={{
@@ -60,7 +58,7 @@ export default function SyncStatus({ style }) {
       transition: 'all 0.3s ease',
       ...style,
     }}>
-      <span>{cfg.icon}</span>
+      <Icon size={14} />
       <span>{cfg.text}{pending > 0 && status !== 'idle' ? ` (${pending} pending)` : ''}</span>
     </div>
   );

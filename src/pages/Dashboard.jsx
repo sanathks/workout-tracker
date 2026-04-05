@@ -1,6 +1,17 @@
 import { useState } from 'react';
 import { workoutDays, weekConfig } from '../data/workoutPlan';
 import { getCurrentWeek, getCurrentDayIndex, getSessions, getRecommendedWeight, deleteSession } from '../utils/storage';
+import {
+  Dumbbell, ArrowDownToLine, Footprints, Flame,
+  ChevronDown, ChevronUp, Settings, Trash2, Play, RotateCcw,
+} from 'lucide-react';
+
+const DAY_ICONS = {
+  'dumbbell': Dumbbell,
+  'arrow-down-to-line': ArrowDownToLine,
+  'footprints': Footprints,
+  'flame': Flame,
+};
 
 export default function Dashboard({ onStartWorkout, onResumeSession, onNavigate }) {
   const week = getCurrentWeek();
@@ -30,13 +41,13 @@ export default function Dashboard({ onStartWorkout, onResumeSession, onNavigate 
           <p style={{ color: 'var(--text-sub)', fontSize: '0.85rem', marginBottom: '4px' }}>
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
           </p>
-          <h1>Hey, Sanath 👋</h1>
+          <h1>Hey, Sanath</h1>
         </div>
         <button
           onClick={() => onNavigate('settings')}
-          style={{ background: 'var(--surface2)', border: '1.5px solid var(--border)', borderRadius: '50%', width: '40px', height: '40px', fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ background: 'var(--surface2)', border: '1.5px solid var(--border)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          ⚙️
+          <Settings size={18} color="var(--text-sub)" />
         </button>
       </div>
 
@@ -70,6 +81,7 @@ export default function Dashboard({ onStartWorkout, onResumeSession, onNavigate 
           {workoutDays.map((day, idx) => {
             const isNext = idx === nextDayIndex;
             const isExpanded = idx === expandedDay;
+            const DayIcon = DAY_ICONS[day.icon] || Dumbbell;
 
             return (
               <div key={day.day} className="card" style={{
@@ -77,33 +89,36 @@ export default function Dashboard({ onStartWorkout, onResumeSession, onNavigate 
                 padding: 0,
                 overflow: 'hidden',
               }}>
-                {/* Day header — always visible, tappable */}
                 <button
                   onClick={() => setExpandedDay(isExpanded ? null : idx)}
                   style={{
                     width: '100%', padding: '16px 20px', background: 'none',
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    textAlign: 'left',
+                    textAlign: 'left', minHeight: '48px',
                   }}
                 >
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <span style={{ fontSize: '1.6rem' }}>{day.emoji}</span>
+                    <div style={{
+                      width: '40px', height: '40px', borderRadius: '10px',
+                      background: isNext ? 'rgba(74,222,128,0.15)' : 'var(--surface2)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>
+                      <DayIcon size={20} color={isNext ? 'var(--primary)' : 'var(--text-sub)'} />
+                    </div>
                     <div>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <h3 style={{ fontSize: '1rem' }}>{day.name}</h3>
-                      </div>
+                      <h3 style={{ fontSize: '0.95rem' }}>{day.name}</h3>
                       <p style={{ color: 'var(--text-sub)', fontSize: '0.8rem', marginTop: '2px' }}>
                         {day.exercises.length} exercises
                       </p>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                     {isNext && <span className="tag tag-green" style={{ fontSize: '0.7rem' }}>Next up</span>}
-                    <span style={{ color: 'var(--text-sub)', fontSize: '0.9rem' }}>{isExpanded ? '▲' : '▼'}</span>
+                    {isExpanded ? <ChevronUp size={18} color="var(--text-sub)" /> : <ChevronDown size={18} color="var(--text-sub)" />}
                   </div>
                 </button>
 
-                {/* Expanded: exercise list + start button */}
                 {isExpanded && (
                   <div style={{ borderTop: '1.5px solid var(--border)', padding: '16px 20px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
@@ -135,8 +150,8 @@ export default function Dashboard({ onStartWorkout, onResumeSession, onNavigate 
                       })}
                     </div>
 
-                    <button className="btn-primary" onClick={() => onStartWorkout(idx)}>
-                      Start {day.name.split(' — ')[0]} →
+                    <button className="btn-primary" onClick={() => onStartWorkout(idx)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                      <Play size={18} /> Start {day.name.split(' — ')[0]}
                     </button>
                   </div>
                 )}
@@ -174,16 +189,15 @@ export default function Dashboard({ onStartWorkout, onResumeSession, onNavigate 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <button
                           onClick={(e) => handleDelete(s.id, e)}
-                          style={{ background: 'none', color: 'var(--danger)', fontSize: '0.8rem', padding: '4px 8px', opacity: 0.7 }}
+                          style={{ background: 'none', color: 'var(--danger)', padding: '6px', opacity: 0.7 }}
                         >
-                          ✕
+                          <Trash2 size={16} />
                         </button>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--warning)', fontWeight: '600' }}>
-                          Resume →
+                        <span style={{ fontSize: '0.75rem', color: 'var(--warning)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <RotateCcw size={14} /> Resume
                         </span>
                       </div>
                     </div>
-                    {/* Mini progress bar */}
                     <div style={{ marginTop: '10px', background: 'var(--surface2)', borderRadius: '100px', height: '4px', overflow: 'hidden' }}>
                       <div style={{ width: `${(doneCount / totalCount) * 100}%`, height: '100%', background: 'var(--warning)', borderRadius: '100px' }} />
                     </div>
@@ -216,14 +230,14 @@ export default function Dashboard({ onStartWorkout, onResumeSession, onNavigate 
                           {new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </p>
                         <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: '600' }}>
-                          ✓ Done
+                          Done
                         </span>
                       </div>
                       <button
                         onClick={(e) => handleDelete(s.id, e)}
-                        style={{ background: 'none', color: 'var(--danger)', fontSize: '0.8rem', padding: '4px 8px', opacity: 0.5 }}
+                        style={{ background: 'none', color: 'var(--danger)', padding: '6px', opacity: 0.4 }}
                       >
-                        ✕
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </div>

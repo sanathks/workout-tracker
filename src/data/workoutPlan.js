@@ -13,7 +13,7 @@ export const workoutDays = [
   {
     day: 1,
     name: "Push — Chest / Shoulders / Triceps / Calves",
-    emoji: "💪",
+    icon: "dumbbell",
     exercises: [
       { id: "d1_a1", code: "A1", name: "30° Incline DB Bench Press", note: "Semi pronated grip" },
       { id: "d1_b1", code: "B1", name: "Pec Deck Fly", note: "" },
@@ -28,7 +28,7 @@ export const workoutDays = [
   {
     day: 2,
     name: "Pull — Back / Biceps / Traps",
-    emoji: "🔙",
+    icon: "arrow-down-to-line",
     exercises: [
       { id: "d2_a1", code: "A1", name: "Seated Lat Pull Down", note: "Towards sternum, mid grip" },
       { id: "d2_b1", code: "B1", name: "Machine Row", note: "Pin loaded, neutral grip" },
@@ -42,7 +42,7 @@ export const workoutDays = [
   {
     day: 3,
     name: "Legs — Quads / Hamstrings / Calves",
-    emoji: "🦵",
+    icon: "footprints",
     exercises: [
       { id: "d3_a1", code: "A1", name: "Air Squats", note: "" },
       { id: "d3_b1", code: "B1", name: "Leg Press", note: "Pin loaded" },
@@ -55,7 +55,7 @@ export const workoutDays = [
   {
     day: 4,
     name: "Push 2 — Chest / Shoulders / Triceps",
-    emoji: "🏋️",
+    icon: "flame",
     exercises: [
       { id: "d4_a1", code: "A1", name: "30° Incline DB Bench Press", note: "Semi pronated grip" },
       { id: "d4_b1", code: "B1", name: "Pec Deck Fly", note: "" },

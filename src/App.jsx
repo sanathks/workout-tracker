@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { isLoggedIn, pullFromCloud, pullRecommendationsFromCloud } from './utils/storage';
+import { Home, ClipboardList } from 'lucide-react';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import WorkoutSession from './pages/WorkoutSession';
@@ -15,8 +16,6 @@ export default function App() {
   const [workoutDayIndex, setWorkoutDayIndex] = useState(null);
   const [resumeSessionId, setResumeSessionId] = useState(null);
 
-  // On login: pull latest data from GitHub (works across all devices)
-  // If offline, this silently fails and we use local data
   useEffect(() => {
     if (!loggedIn) return;
     setSyncing(true);
@@ -39,11 +38,8 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh' }}>
-
-      {/* Persistent sync status bar */}
       <SyncStatus />
 
-      {/* Loading indicator (initial cloud pull) */}
       {syncing && (
         <div style={{
           position: 'fixed', top: 28, left: 0, right: 0, zIndex: 199,
@@ -77,14 +73,13 @@ export default function App() {
         <Settings onLogout={() => { setLoggedIn(false); setScreen('dashboard'); }} />
       )}
 
-      {/* Bottom Nav (hidden during active workout) */}
       {screen !== 'workout' && (
         <nav className="nav-bar">
           <button
             className={`nav-item ${tab === 'dashboard' ? 'active' : ''}`}
             onClick={() => navigate('dashboard')}
           >
-            <span>🏠</span>
+            <Home size={22} />
             <span>Home</span>
           </button>
 
@@ -92,7 +87,7 @@ export default function App() {
             className={`nav-item ${tab === 'history' ? 'active' : ''}`}
             onClick={() => navigate('history')}
           >
-            <span>📋</span>
+            <ClipboardList size={22} />
             <span>History</span>
           </button>
         </nav>

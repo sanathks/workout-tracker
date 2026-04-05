@@ -7,6 +7,10 @@ import {
   pushToCloud, getLastSyncTime,
 } from '../utils/storage';
 import { forceSync, getSyncStatus, getPendingCount } from '../utils/syncQueue';
+import {
+  Lock, Bot, Cloud, RefreshCw, Download, Upload,
+  Calendar, Save, LogOut,
+} from 'lucide-react';
 
 export default function Settings({ onLogout }) {
   const [settings, setSettings] = useState(getSettings());
@@ -32,12 +36,11 @@ export default function Settings({ onLogout }) {
     setSyncing(true);
     setSyncMsg('');
     try {
-      // Push current state to queue, then force-flush
       await pushToCloud();
       await forceSync();
-      setSyncMsg('✅ Synced to GitHub successfully');
+      setSyncMsg('Synced to GitHub successfully');
     } catch {
-      setSyncMsg('⚠️ Sync failed — will retry automatically when online');
+      setSyncMsg('Sync failed — will retry automatically when online');
     } finally {
       setSyncing(false);
       setTimeout(() => setSyncMsg(''), 4000);
@@ -50,7 +53,7 @@ export default function Settings({ onLogout }) {
     const reader = new FileReader();
     reader.onload = (ev) => {
       const ok = importData(ev.target.result);
-      setImportMsg(ok ? '✅ Data imported successfully' : '❌ Invalid file — import failed');
+      setImportMsg(ok ? 'Data imported successfully' : 'Invalid file — import failed');
       setTimeout(() => setImportMsg(''), 4000);
     };
     reader.readAsText(file);
@@ -60,9 +63,12 @@ export default function Settings({ onLogout }) {
     <div className="page gap-4">
       <h1>Settings</h1>
 
-      {/* ── Security ───────────────────────────────────────────────── */}
+      {/* Security */}
       <div className="card gap-3">
-        <h3>🔐 Security</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Lock size={18} color="var(--text-sub)" />
+          <h3>Security</h3>
+        </div>
         <div>
           <label style={{ fontSize: '0.8rem', color: 'var(--text-sub)', display: 'block', marginBottom: '6px' }}>PIN (4 digits)</label>
           <input
@@ -76,9 +82,12 @@ export default function Settings({ onLogout }) {
         </div>
       </div>
 
-      {/* ── AI Recommendations ─────────────────────────────────────── */}
+      {/* AI Recommendations */}
       <div className="card gap-3">
-        <h3>🤖 AI Recommendations</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Bot size={18} color="var(--text-sub)" />
+          <h3>AI Recommendations</h3>
+        </div>
         <p style={{ color: 'var(--text-sub)', fontSize: '0.85rem' }}>
           Claude API key enables AI-powered weight recommendations after each session. Without it, smart rule-based logic is used.
         </p>
@@ -95,9 +104,12 @@ export default function Settings({ onLogout }) {
         <p style={{ color: 'var(--text-sub)', fontSize: '0.75rem' }}>Get your key at console.anthropic.com</p>
       </div>
 
-      {/* ── Cloud Sync ─────────────────────────────────────────────── */}
+      {/* Cloud Sync */}
       <div className="card gap-3">
-        <h3>☁️ GitHub Sync</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Cloud size={18} color="var(--text-sub)" />
+          <h3>GitHub Sync</h3>
+        </div>
         <p style={{ color: 'var(--text-sub)', fontSize: '0.85rem' }}>
           Data auto-saves to your GitHub repo after every workout. Use this to manually force a sync.
         </p>
@@ -113,26 +125,29 @@ export default function Settings({ onLogout }) {
           className="btn-ghost"
           onClick={handleManualSync}
           disabled={syncing}
-          style={{ opacity: syncing ? 0.6 : 1 }}
+          style={{ opacity: syncing ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: '8px' }}
         >
-          {syncing ? '🔄 Syncing...' : '🔄 Force Sync to GitHub'}
+          <RefreshCw size={16} className={syncing ? 'spin' : ''} />
+          {syncing ? 'Syncing...' : 'Force Sync to GitHub'}
         </button>
-        {syncMsg && <p style={{ fontSize: '0.85rem', fontWeight: '600' }}>{syncMsg}</p>}
+        {syncMsg && <p style={{ fontSize: '0.85rem', fontWeight: '600', color: syncMsg.includes('success') ? 'var(--primary)' : 'var(--warning)' }}>{syncMsg}</p>}
       </div>
 
-      {/* ── Export / Import ─────────────────────────────────────────── */}
+      {/* Export / Import */}
       <div className="card gap-3">
-        <h3>📤 Export & Import</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Download size={18} color="var(--text-sub)" />
+          <h3>Export & Import</h3>
+        </div>
         <p style={{ color: 'var(--text-sub)', fontSize: '0.85rem' }}>
           Export your workout JSON to share with Claude for weekly analysis. Import recommendations Claude gives back.
         </p>
 
-        <button className="btn-ghost" onClick={exportData}>
-          📥 Export Workout Data (.json)
+        <button className="btn-ghost" onClick={exportData} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Download size={16} /> Export Workout Data (.json)
         </button>
 
         <div>
-          <label style={{ fontSize: '0.8rem', color: 'var(--text-sub)', display: 'block', marginBottom: '6px' }}>IMPORT FILE (from Claude)</label>
           <input
             ref={fileInputRef}
             type="file"
@@ -143,17 +158,20 @@ export default function Settings({ onLogout }) {
           <button
             className="btn-ghost"
             onClick={() => fileInputRef.current?.click()}
-            style={{ width: '100%' }}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            📤 Import Data / Recommendations
+            <Upload size={16} /> Import Data / Recommendations
           </button>
         </div>
-        {importMsg && <p style={{ fontSize: '0.85rem', fontWeight: '600' }}>{importMsg}</p>}
+        {importMsg && <p style={{ fontSize: '0.85rem', fontWeight: '600', color: importMsg.includes('success') ? 'var(--primary)' : 'var(--danger)' }}>{importMsg}</p>}
       </div>
 
-      {/* ── Program Position ───────────────────────────────────────── */}
+      {/* Program Position */}
       <div className="card gap-3">
-        <h3>📅 Program Position</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Calendar size={18} color="var(--text-sub)" />
+          <h3>Program Position</h3>
+        </div>
         <p style={{ color: 'var(--text-sub)', fontSize: '0.85rem' }}>Correct your current week or day if needed.</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <div>
@@ -182,16 +200,16 @@ export default function Settings({ onLogout }) {
         </div>
       </div>
 
-      <button className="btn-primary" onClick={handleSave}>
-        {saved ? '✓ Saved!' : 'Save Settings'}
+      <button className="btn-primary" onClick={handleSave} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+        <Save size={18} /> {saved ? 'Saved!' : 'Save Settings'}
       </button>
 
       <button
         className="btn-ghost"
         onClick={() => { logout(); onLogout(); }}
-        style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
+        style={{ color: 'var(--danger)', borderColor: 'var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%' }}
       >
-        Log Out
+        <LogOut size={16} /> Log Out
       </button>
     </div>
   );
