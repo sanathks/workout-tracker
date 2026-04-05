@@ -1,8 +1,8 @@
 {
   "sessions": [
     {
-      "id": "1775393414034",
-      "date": "2026-04-05T12:50:14.034Z",
+      "id": "1775394803843",
+      "date": "2026-04-05T13:13:23.843Z",
       "week": 1,
       "dayIndex": 0,
       "dayName": "Push — Chest / Shoulders / Triceps / Calves",
@@ -11,21 +11,8 @@
           "exerciseId": "d1_a1",
           "name": "30° Incline DB Bench Press",
           "note": "Semi pronated grip",
-          "sets": [
-            {
-              "weight": 13,
-              "reps": 8
-            },
-            {
-              "weight": 13,
-              "reps": 8
-            },
-            {
-              "weight": 13,
-              "reps": 8
-            }
-          ],
-          "rating": "good",
+          "sets": [],
+          "rating": null,
           "recommendation": null
         },
         {
@@ -80,25 +67,12 @@
           "exerciseId": "d1_h1",
           "name": "Seated Calf Raise",
           "note": "",
-          "sets": [
-            {
-              "weight": 34,
-              "reps": 8
-            },
-            {
-              "weight": 34,
-              "reps": 8
-            },
-            {
-              "weight": 34,
-              "reps": 8
-            }
-          ],
-          "rating": "good",
+          "sets": [],
+          "rating": null,
           "recommendation": null
         }
       ],
-      "completed": true
+      "completed": false
     }
   ],
   "recommendations": {
@@ -115,5 +89,5 @@
   },
   "currentWeek": 1,
   "currentDayIndex": 0,
-  "lastUpdated": "2026-04-05T13:14:44.713Z"
+  "lastUpdated": "2026-04-05T13:14:46.864Z"
 }
