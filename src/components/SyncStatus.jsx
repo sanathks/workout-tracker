@@ -35,14 +35,14 @@ export default function SyncStatus({ style }) {
   }, []);
 
   useEffect(() => {
-    if (status === 'idle' && visible) {
-      const t = setTimeout(() => setVisible(false), 3000);
-      return () => clearTimeout(t);
-    }
-    if (status !== 'idle') setVisible(true);
+    if (!visible) return;
+    // Auto-hide all statuses after a delay
+    const delay = status === 'idle' ? 2000 : 4000;
+    const t = setTimeout(() => setVisible(false), delay);
+    return () => clearTimeout(t);
   }, [status, visible]);
 
-  if (!visible && status === 'idle') return null;
+  if (!visible) return null;
 
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.idle;
   const Icon = cfg.Icon;
