@@ -80,7 +80,12 @@
           "exerciseId": "d1_h1",
           "name": "Seated Calf Raise",
           "note": "",
-          "sets": [],
+          "sets": [
+            {
+              "weight": 34,
+              "reps": 8
+            }
+          ],
           "rating": null,
           "recommendation": null
         }
@@ -91,5 +96,5 @@
   "recommendations": {},
   "currentWeek": 1,
   "currentDayIndex": 0,
-  "lastUpdated": "2026-04-05T12:50:19.666Z"
+  "lastUpdated": "2026-04-05T12:50:24.936Z"
 }
