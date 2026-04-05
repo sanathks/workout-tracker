@@ -102,6 +102,18 @@ export const getLastWeightForExercise = (exerciseId) => {
   return null;
 };
 
+/** Get full sets + rating from the last completed session for an exercise */
+export const getLastSessionForExercise = (exerciseId) => {
+  const sessions = getSessions().filter(s => s.completed);
+  for (let i = sessions.length - 1; i >= 0; i--) {
+    const ex = sessions[i].exercises?.find(e => e.exerciseId === exerciseId);
+    if (ex?.sets?.length > 0) {
+      return { sets: ex.sets, rating: ex.rating, date: sessions[i].date, week: sessions[i].week };
+    }
+  }
+  return null;
+};
+
 export const getRecommendedWeight = (exerciseId) => {
   const recs = getRecommendations();
   return recs[exerciseId]?.weight ?? getLastWeightForExercise(exerciseId);

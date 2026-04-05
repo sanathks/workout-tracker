@@ -1,19 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { workoutDays, weekConfig } from '../data/workoutPlan';
 import {
   getCurrentWeek, getCurrentDayIndex,
   createSession, saveSession, advanceToNextDay,
   getRecommendedWeight, getSettings, getSessions,
+  getLastSessionForExercise,
 } from '../utils/storage';
 import { getSyncStatus } from '../utils/syncQueue';
 import { generateRecommendations } from '../utils/aiRecommendations';
 import { unlockAudio } from '../utils/sound';
+import { requestWakeLock, releaseWakeLock } from '../utils/wakeLock';
 import RestTimer from '../components/RestTimer';
 import {
   SmilePlus, ThumbsUp, Flame, Skull,
   Check, CheckCircle, ChevronRight, Trophy,
   CloudUpload, RefreshCw, Clock, WifiOff, AlertTriangle, Undo2,
-  Loader, Bot, ArrowLeft,
+  Loader, Bot, ArrowLeft, History, Timer, MessageSquare,
 } from 'lucide-react';
 
 const RATINGS = [
@@ -23,10 +25,15 @@ const RATINGS = [
   { key: 'failed',   label: 'Failed',   Icon: Skull,     color: '#f87171', desc: 'Missed some reps' },
 ];
 
-// Parse "60–90s" or "90–180s" → default rest seconds (use lower bound)
 function parseRestSeconds(restStr) {
   const match = restStr.match(/(\d+)/);
   return match ? parseInt(match[1]) : 90;
+}
+
+function formatDuration(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 export default function WorkoutSession({ dayIndex: selectedDayIndex, resumeSessionId, onComplete }) {
@@ -53,16 +60,38 @@ export default function WorkoutSession({ dayIndex: selectedDayIndex, resumeSessi
     }
     return 0;
   });
-  const [phase, setPhase] = useState('logging'); // 'logging' | 'resting' | 'summary'
+  const [phase, setPhase] = useState('logging');
   const [analyzing, setAnalyzing] = useState(false);
   const [synced, setSynced] = useState(false);
   const [recommendations, setRecommendations] = useState(null);
   const [weightInputs, setWeightInputs] = useState({});
 
-  const currentExercise = today.exercises[activeEx];
-  const sessionEx = session.exercises[activeEx];
+  // ── Session duration clock ──────────────────────────────────────────────────
+  const startTimeRef = useRef(Date.now());
+  const [elapsed, setElapsed] = useState(0);
 
-  // Unlock audio on first interaction
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // ── Wake Lock — keep screen on ─────────────────────────────────────────────
+  useEffect(() => {
+    requestWakeLock();
+    // Re-acquire on visibility change (returning from lock screen)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') requestWakeLock();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      releaseWakeLock();
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
+
+  // ── Unlock audio on first touch (iOS) ──────────────────────────────────────
   useEffect(() => {
     const handler = () => { unlockAudio(); window.removeEventListener('touchstart', handler); };
     window.addEventListener('touchstart', handler, { once: true });
@@ -70,6 +99,9 @@ export default function WorkoutSession({ dayIndex: selectedDayIndex, resumeSessi
   }, []);
 
   useEffect(() => { saveSession(session); }, [session]);
+
+  const currentExercise = today.exercises[activeEx];
+  const sessionEx = session.exercises[activeEx];
 
   const updateExercise = (updates) => {
     setSession(prev => {
@@ -83,8 +115,9 @@ export default function WorkoutSession({ dayIndex: selectedDayIndex, resumeSessi
     const newSet = { weight: parseFloat(weight) || 0, reps: parseInt(reps) || 0 };
     const newSets = [...(sessionEx.sets || []), newSet];
     updateExercise({ sets: newSets });
+    // Track weight for this exercise so next set pre-fills it
+    setWeightInputs(prev => ({ ...prev, [currentExercise.id]: weight }));
 
-    // Start rest timer if there are more sets to go
     const targetSets = wkCfg.sets;
     if (newSets.length < targetSets) {
       setPhase('resting');
@@ -97,9 +130,7 @@ export default function WorkoutSession({ dayIndex: selectedDayIndex, resumeSessi
     if (phase === 'resting') setPhase('logging');
   };
 
-  const setRating = (key) => {
-    updateExercise({ rating: key });
-  };
+  const setRating = (key) => updateExercise({ rating: key });
 
   const nextExercise = () => {
     if (activeEx < today.exercises.length - 1) {
@@ -116,6 +147,7 @@ export default function WorkoutSession({ dayIndex: selectedDayIndex, resumeSessi
     saveSession(completed);
     setPhase('summary');
     setSynced(true);
+    releaseWakeLock();
 
     setAnalyzing(true);
     const { apiKey } = getSettings();
@@ -129,24 +161,40 @@ export default function WorkoutSession({ dayIndex: selectedDayIndex, resumeSessi
     onComplete();
   };
 
+  // Weight default: current session input > recommendation > last session
   const getDefaultWeight = (exId) => {
     return weightInputs[exId] || getRecommendedWeight(exId) || '';
   };
 
   if (phase === 'summary') {
-    return <Summary session={session} recommendations={recommendations} analyzing={analyzing} synced={synced} onDone={handleDone} week={week} />;
+    return <Summary session={session} recommendations={recommendations} analyzing={analyzing} synced={synced} onDone={handleDone} week={week} elapsed={elapsed} />;
   }
 
   const setsLogged = sessionEx?.sets?.length || 0;
   const targetSets = wkCfg.sets;
   const allSetsLogged = setsLogged >= targetSets;
 
+  // Last session data for the current exercise
+  const lastSession = getLastSessionForExercise(currentExercise.id);
+
   return (
     <div className="page gap-4">
-      {/* Header */}
-      <div>
-        <p style={{ color: 'var(--text-sub)', fontSize: '0.8rem' }}>{today.name}</p>
-        <h2 style={{ marginTop: '4px' }}>Week {week} · {wkCfg.sets}×{wkCfg.reps} · {wkCfg.rest}</h2>
+      {/* Header with duration clock */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <p style={{ color: 'var(--text-sub)', fontSize: '0.8rem' }}>{today.name}</p>
+          <h2 style={{ marginTop: '4px' }}>Week {week} · {wkCfg.sets}×{wkCfg.reps} · {wkCfg.rest}</h2>
+        </div>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '6px',
+          background: 'var(--surface2)', borderRadius: 'var(--radius-sm)',
+          padding: '6px 12px', flexShrink: 0,
+        }}>
+          <Timer size={14} color="var(--text-sub)" />
+          <span style={{ fontSize: '0.85rem', fontWeight: '700', fontVariantNumeric: 'tabular-nums', color: 'var(--text-sub)' }}>
+            {formatDuration(elapsed)}
+          </span>
+        </div>
       </div>
 
       {/* Exercise tabs */}
@@ -159,13 +207,10 @@ export default function WorkoutSession({ dayIndex: selectedDayIndex, resumeSessi
               key={ex.id}
               onClick={() => { setActiveEx(i); setPhase('logging'); }}
               style={{
-                flexShrink: 0,
-                padding: '8px 14px',
-                borderRadius: '100px',
+                flexShrink: 0, padding: '8px 14px', borderRadius: '100px',
                 background: i === activeEx ? 'var(--primary)' : done ? 'rgba(74,222,128,0.15)' : 'var(--surface)',
                 color: i === activeEx ? '#000' : done ? 'var(--primary)' : 'var(--text-sub)',
-                fontSize: '0.8rem',
-                fontWeight: '700',
+                fontSize: '0.8rem', fontWeight: '700',
                 border: '1.5px solid',
                 borderColor: i === activeEx ? 'var(--primary)' : done ? 'var(--primary)' : 'var(--border)',
                 display: 'flex', alignItems: 'center', gap: '4px',
@@ -177,13 +222,36 @@ export default function WorkoutSession({ dayIndex: selectedDayIndex, resumeSessi
         })}
       </div>
 
-      {/* Current Exercise */}
+      {/* Current Exercise Card */}
       <div className="card" style={{ borderColor: 'rgba(74,222,128,0.2)' }}>
-        <div style={{ marginBottom: '16px' }}>
+        <div style={{ marginBottom: '12px' }}>
           <p style={{ color: 'var(--text-sub)', fontSize: '0.75rem', marginBottom: '4px' }}>{currentExercise.code}</p>
           <h2>{currentExercise.name}</h2>
           {currentExercise.note && <p style={{ color: 'var(--text-sub)', fontSize: '0.85rem', marginTop: '2px' }}>{currentExercise.note}</p>}
         </div>
+
+        {/* Last session info */}
+        {lastSession && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '10px 12px', marginBottom: '14px',
+            background: 'var(--surface2)', borderRadius: 'var(--radius-sm)',
+            fontSize: '0.8rem', color: 'var(--text-sub)',
+          }}>
+            <History size={14} style={{ flexShrink: 0 }} />
+            <div>
+              <span style={{ fontWeight: '600' }}>Last: </span>
+              {lastSession.sets.map((s, i) => (
+                <span key={i}>
+                  {i > 0 && ', '}{s.weight}kg×{s.reps}
+                </span>
+              ))}
+              <span style={{ marginLeft: '6px', opacity: 0.6 }}>
+                · Wk {lastSession.week}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Sets logged */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -192,12 +260,10 @@ export default function WorkoutSession({ dayIndex: selectedDayIndex, resumeSessi
             const set = sessionEx?.sets?.[i];
             return (
               <div key={i} style={{
-                padding: '6px 12px',
-                borderRadius: '8px',
+                padding: '6px 12px', borderRadius: '8px',
                 background: set ? 'rgba(74,222,128,0.15)' : 'var(--surface2)',
                 border: `1.5px solid ${set ? 'var(--primary)' : 'var(--border)'}`,
-                fontSize: '0.85rem',
-                fontWeight: '600',
+                fontSize: '0.85rem', fontWeight: '600',
                 color: set ? 'var(--primary)' : 'var(--text-sub)',
               }}>
                 {set ? `${set.weight}kg × ${set.reps}` : `Set ${i + 1}`}
@@ -213,10 +279,7 @@ export default function WorkoutSession({ dayIndex: selectedDayIndex, resumeSessi
 
         {/* Rest Timer */}
         {phase === 'resting' && (
-          <RestTimer
-            restSeconds={restSeconds}
-            onDismiss={() => setPhase('logging')}
-          />
+          <RestTimer restSeconds={restSeconds} onDismiss={() => setPhase('logging')} />
         )}
 
         {/* Log Set Form */}
@@ -224,10 +287,7 @@ export default function WorkoutSession({ dayIndex: selectedDayIndex, resumeSessi
           <LogSetForm
             defaultWeight={getDefaultWeight(currentExercise.id)}
             setNum={setsLogged + 1}
-            onLog={(w, r) => {
-              setWeightInputs(prev => ({ ...prev, [currentExercise.id]: w }));
-              logSet(w, r);
-            }}
+            onLog={(w, r) => logSet(w, r)}
           />
         )}
 
@@ -239,20 +299,11 @@ export default function WorkoutSession({ dayIndex: selectedDayIndex, resumeSessi
               {RATINGS.map(r => {
                 const Icon = r.Icon;
                 return (
-                  <button
-                    key={r.key}
-                    onClick={() => setRating(r.key)}
-                    style={{
-                      padding: '16px',
-                      borderRadius: 'var(--radius)',
-                      background: 'var(--surface2)',
-                      border: '2px solid var(--border)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      gap: '6px',
-                    }}
-                  >
+                  <button key={r.key} onClick={() => setRating(r.key)} style={{
+                    padding: '16px', borderRadius: 'var(--radius)',
+                    background: 'var(--surface2)', border: '2px solid var(--border)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '6px',
+                  }}>
                     <Icon size={24} color={r.color} />
                     <span style={{ fontWeight: '700', fontSize: '0.9rem', color: r.color }}>{r.label}</span>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)' }}>{r.desc}</span>
@@ -263,13 +314,13 @@ export default function WorkoutSession({ dayIndex: selectedDayIndex, resumeSessi
           </div>
         )}
 
-        {/* Rated — next exercise button */}
+        {/* Notes input (shown after rating) */}
         {phase === 'logging' && allSetsLogged && sessionEx?.rating && (
           <div>
             <div style={{
               display: 'flex', alignItems: 'center', gap: '10px',
               padding: '14px', background: 'var(--surface2)', borderRadius: 'var(--radius-sm)',
-              marginBottom: '16px',
+              marginBottom: '12px',
             }}>
               {(() => { const r = RATINGS.find(r => r.key === sessionEx.rating); const Icon = r?.Icon; return Icon ? <Icon size={24} color={r.color} /> : null; })()}
               <div>
@@ -278,6 +329,22 @@ export default function WorkoutSession({ dayIndex: selectedDayIndex, resumeSessi
               </div>
               <CheckCircle size={20} color="var(--primary)" style={{ marginLeft: 'auto' }} />
             </div>
+
+            {/* Quick note */}
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                <MessageSquare size={14} color="var(--text-sub)" />
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-sub)' }}>NOTE (optional)</label>
+              </div>
+              <input
+                type="text"
+                value={sessionEx.note || ''}
+                onChange={e => updateExercise({ note: e.target.value })}
+                placeholder="e.g. felt shoulder twinge, try wider grip..."
+                style={{ width: '100%', padding: '10px 12px', fontSize: '0.85rem' }}
+              />
+            </div>
+
             <button className="btn-primary" onClick={nextExercise} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
               {activeEx < today.exercises.length - 1 ? (
                 <>Next: {today.exercises[activeEx + 1].name} <ChevronRight size={18} /></>
@@ -301,6 +368,11 @@ function LogSetForm({ defaultWeight, setNum, onLog }) {
   const [weight, setWeight] = useState(defaultWeight || '');
   const [reps, setReps] = useState('8');
 
+  // Update weight when defaultWeight changes (switching exercises)
+  useEffect(() => {
+    if (defaultWeight) setWeight(defaultWeight);
+  }, [defaultWeight]);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       <p style={{ fontSize: '0.85rem', color: 'var(--text-sub)' }}>Set {setNum}</p>
@@ -308,10 +380,8 @@ function LogSetForm({ defaultWeight, setNum, onLog }) {
         <div>
           <label style={{ fontSize: '0.75rem', color: 'var(--text-sub)', display: 'block', marginBottom: '6px' }}>WEIGHT (kg)</label>
           <input
-            type="number"
-            inputMode="decimal"
-            value={weight}
-            onChange={e => setWeight(e.target.value)}
+            type="number" inputMode="decimal"
+            value={weight} onChange={e => setWeight(e.target.value)}
             placeholder="e.g. 20"
             style={{ width: '100%', padding: '14px', fontSize: '1.2rem', fontWeight: '700', textAlign: 'center' }}
           />
@@ -319,10 +389,8 @@ function LogSetForm({ defaultWeight, setNum, onLog }) {
         <div>
           <label style={{ fontSize: '0.75rem', color: 'var(--text-sub)', display: 'block', marginBottom: '6px' }}>REPS DONE</label>
           <input
-            type="number"
-            inputMode="numeric"
-            value={reps}
-            onChange={e => setReps(e.target.value)}
+            type="number" inputMode="numeric"
+            value={reps} onChange={e => setReps(e.target.value)}
             placeholder="8"
             style={{ width: '100%', padding: '14px', fontSize: '1.2rem', fontWeight: '700', textAlign: 'center' }}
           />
@@ -367,7 +435,7 @@ function SyncBanner() {
   );
 }
 
-function Summary({ session, recommendations, analyzing, synced, onDone, week }) {
+function Summary({ session, recommendations, analyzing, synced, onDone, week, elapsed }) {
   const nextWeek = Math.min(week + 1, 8);
 
   return (
@@ -378,6 +446,9 @@ function Summary({ session, recommendations, analyzing, synced, onDone, week }) 
         </div>
         <h1>Workout Done!</h1>
         <p style={{ color: 'var(--text-sub)', marginTop: '4px' }}>{session.dayName}</p>
+        <p style={{ color: 'var(--text-sub)', fontSize: '0.85rem', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+          <Timer size={14} /> {formatDuration(elapsed)}
+        </p>
       </div>
 
       <SyncBanner />
@@ -397,11 +468,14 @@ function Summary({ session, recommendations, analyzing, synced, onDone, week }) 
                 </div>
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                   {ex.sets.map((s, i) => (
-                    <span key={i} className="tag">
-                      {s.weight}kg × {s.reps}
-                    </span>
+                    <span key={i} className="tag">{s.weight}kg × {s.reps}</span>
                   ))}
                 </div>
+                {ex.note && (
+                  <p style={{ color: 'var(--text-sub)', fontSize: '0.8rem', marginTop: '8px', fontStyle: 'italic' }}>
+                    {ex.note}
+                  </p>
+                )}
               </div>
             );
           })}

@@ -1,50 +1,73 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Timer, X, Plus, Minus, SkipForward } from 'lucide-react';
+import { Timer, Plus, Minus, SkipForward } from 'lucide-react';
 import { playRestDone, playTick } from '../utils/sound';
 
 /**
- * RestTimer — shows after logging a set (not the last one).
- * Counts down from the rest duration, plays a chime when done.
- *
- * Props:
- *   restSeconds  — default rest time in seconds
- *   onDismiss    — called when timer is skipped or dismissed after finishing
+ * RestTimer — uses absolute end time so it survives screen lock / background.
+ * When the user returns, remaining time is calculated from Date.now().
  */
 export default function RestTimer({ restSeconds = 90, onDismiss }) {
   const [totalTime, setTotalTime] = useState(restSeconds);
+  const [endTime, setEndTime] = useState(() => Date.now() + restSeconds * 1000);
   const [remaining, setRemaining] = useState(restSeconds);
   const [finished, setFinished] = useState(false);
-  const intervalRef = useRef(null);
   const soundPlayed = useRef(false);
+  const rafRef = useRef(null);
 
-  // Countdown
+  // Tick loop — uses requestAnimationFrame + Date.now() for accuracy
   useEffect(() => {
     if (finished) return;
 
-    intervalRef.current = setInterval(() => {
-      setRemaining(prev => {
-        if (prev <= 1) {
-          clearInterval(intervalRef.current);
-          setFinished(true);
-          if (!soundPlayed.current) {
-            soundPlayed.current = true;
-            playRestDone();
-          }
-          return 0;
-        }
-        // Tick sound at 3, 2, 1
-        if (prev <= 4 && prev > 1) playTick();
-        return prev - 1;
-      });
-    }, 1000);
+    const tick = () => {
+      const now = Date.now();
+      const left = Math.max(0, Math.ceil((endTime - now) / 1000));
+      setRemaining(left);
 
-    return () => clearInterval(intervalRef.current);
-  }, [finished, totalTime]);
+      if (left <= 0) {
+        setFinished(true);
+        if (!soundPlayed.current) {
+          soundPlayed.current = true;
+          playRestDone();
+        }
+        return;
+      }
+
+      // Tick sounds at 3, 2, 1
+      if (left <= 3 && left > 0) {
+        const msToNext = (endTime - now) % 1000;
+        if (msToNext > 900) playTick();
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+
+    // Also re-check when page becomes visible (returning from lock screen)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        // Force an immediate recalc
+        const left = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+        setRemaining(left);
+        if (left <= 0 && !soundPlayed.current) {
+          soundPlayed.current = true;
+          setFinished(true);
+          playRestDone();
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [endTime, finished]);
 
   const adjust = useCallback((delta) => {
     const newTotal = Math.max(15, totalTime + delta);
     setTotalTime(newTotal);
-    setRemaining(prev => Math.max(0, prev + delta));
+    setEndTime(prev => prev + delta * 1000);
     setFinished(false);
     soundPlayed.current = false;
   }, [totalTime]);
@@ -53,7 +76,6 @@ export default function RestTimer({ restSeconds = 90, onDismiss }) {
   const mins = Math.floor(remaining / 60);
   const secs = remaining % 60;
 
-  // Circle progress
   const radius = 70;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - progress);
@@ -74,26 +96,15 @@ export default function RestTimer({ restSeconds = 90, onDismiss }) {
       {/* Circular countdown */}
       <div style={{ position: 'relative', width: '160px', height: '160px' }}>
         <svg width="160" height="160" style={{ transform: 'rotate(-90deg)' }}>
-          {/* Background circle */}
+          <circle cx="80" cy="80" r={radius} fill="none" stroke="var(--surface2)" strokeWidth="6" />
           <circle
-            cx="80" cy="80" r={radius}
-            fill="none"
-            stroke="var(--surface2)"
-            strokeWidth="6"
-          />
-          {/* Progress circle */}
-          <circle
-            cx="80" cy="80" r={radius}
-            fill="none"
+            cx="80" cy="80" r={radius} fill="none"
             stroke={finished ? 'var(--primary)' : remaining <= 10 ? 'var(--warning)' : 'var(--primary)'}
-            strokeWidth="6"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s' }}
+            strokeWidth="6" strokeLinecap="round"
+            strokeDasharray={circumference} strokeDashoffset={offset}
+            style={{ transition: 'stroke-dashoffset 0.3s linear, stroke 0.3s' }}
           />
         </svg>
-        {/* Time display */}
         <div style={{
           position: 'absolute', inset: 0,
           display: 'flex', flexDirection: 'column',
@@ -107,62 +118,42 @@ export default function RestTimer({ restSeconds = 90, onDismiss }) {
             {mins}:{secs.toString().padStart(2, '0')}
           </span>
           {!finished && (
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)', marginTop: '2px' }}>
-              remaining
-            </span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-sub)', marginTop: '2px' }}>remaining</span>
           )}
         </div>
       </div>
 
-      {/* Adjust time buttons */}
+      {/* Adjust time */}
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-        <button
-          onClick={() => adjust(-15)}
-          style={{
-            background: 'var(--surface2)', border: '1.5px solid var(--border)',
-            borderRadius: '50%', width: '44px', height: '44px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'var(--text-sub)',
-          }}
-        >
+        <button onClick={() => adjust(-15)} style={{
+          background: 'var(--surface2)', border: '1.5px solid var(--border)',
+          borderRadius: '50%', width: '44px', height: '44px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-sub)',
+        }}>
           <Minus size={18} />
         </button>
         <span style={{ fontSize: '0.8rem', color: 'var(--text-sub)', fontWeight: '600', minWidth: '40px', textAlign: 'center' }}>
           {totalTime}s
         </span>
-        <button
-          onClick={() => adjust(15)}
-          style={{
-            background: 'var(--surface2)', border: '1.5px solid var(--border)',
-            borderRadius: '50%', width: '44px', height: '44px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'var(--text-sub)',
-          }}
-        >
+        <button onClick={() => adjust(15)} style={{
+          background: 'var(--surface2)', border: '1.5px solid var(--border)',
+          borderRadius: '50%', width: '44px', height: '44px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-sub)',
+        }}>
           <Plus size={18} />
         </button>
       </div>
 
       {/* Skip / Dismiss */}
-      <button
-        onClick={onDismiss}
-        style={{
-          background: finished ? 'var(--primary)' : 'var(--surface2)',
-          color: finished ? '#000' : 'var(--text-sub)',
-          border: finished ? 'none' : '1.5px solid var(--border)',
-          borderRadius: 'var(--radius)',
-          padding: '14px 32px',
-          fontWeight: '700',
-          fontSize: '0.9rem',
-          display: 'flex', alignItems: 'center', gap: '8px',
-          minHeight: '48px',
-        }}
-      >
-        {finished ? (
-          <>Next set</>
-        ) : (
-          <><SkipForward size={16} /> Skip rest</>
-        )}
+      <button onClick={onDismiss} style={{
+        background: finished ? 'var(--primary)' : 'var(--surface2)',
+        color: finished ? '#000' : 'var(--text-sub)',
+        border: finished ? 'none' : '1.5px solid var(--border)',
+        borderRadius: 'var(--radius)', padding: '14px 32px',
+        fontWeight: '700', fontSize: '0.9rem',
+        display: 'flex', alignItems: 'center', gap: '8px', minHeight: '48px',
+      }}>
+        {finished ? <>Next set</> : <><SkipForward size={16} /> Skip rest</>}
       </button>
     </div>
   );
