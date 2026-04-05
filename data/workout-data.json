@@ -106,7 +106,12 @@
           "exerciseId": "d1_b1",
           "name": "Pec Deck Fly",
           "note": "",
-          "sets": [],
+          "sets": [
+            {
+              "weight": 32,
+              "reps": 8
+            }
+          ],
           "rating": null,
           "recommendation": null
         },
@@ -165,5 +170,5 @@
   "recommendations": {},
   "currentWeek": 1,
   "currentDayIndex": 0,
-  "lastUpdated": "2026-04-05T14:18:40.587Z"
+  "lastUpdated": "2026-04-05T14:23:07.994Z"
 }
