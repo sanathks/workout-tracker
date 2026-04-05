@@ -1,7 +1,82 @@
 {
-  "sessions": [],
+  "sessions": [
+    {
+      "id": "1775396036292",
+      "date": "2026-04-05T13:33:56.292Z",
+      "week": 1,
+      "dayIndex": 0,
+      "dayName": "Push — Chest / Shoulders / Triceps / Calves",
+      "exercises": [
+        {
+          "exerciseId": "d1_a1",
+          "name": "30° Incline DB Bench Press",
+          "note": "Semi pronated grip",
+          "sets": [],
+          "rating": null,
+          "recommendation": null
+        },
+        {
+          "exerciseId": "d1_b1",
+          "name": "Pec Deck Fly",
+          "note": "",
+          "sets": [],
+          "rating": null,
+          "recommendation": null
+        },
+        {
+          "exerciseId": "d1_c1",
+          "name": "Flat DB Bench Press",
+          "note": "Semi pronated grip",
+          "sets": [],
+          "rating": null,
+          "recommendation": null
+        },
+        {
+          "exerciseId": "d1_d1",
+          "name": "Standing DB Lateral Raise",
+          "note": "",
+          "sets": [],
+          "rating": null,
+          "recommendation": null
+        },
+        {
+          "exerciseId": "d1_e1",
+          "name": "Machine Shoulder Press",
+          "note": "Pin loaded",
+          "sets": [],
+          "rating": null,
+          "recommendation": null
+        },
+        {
+          "exerciseId": "d1_f1",
+          "name": "Rope Tricep Push Down",
+          "note": "",
+          "sets": [],
+          "rating": null,
+          "recommendation": null
+        },
+        {
+          "exerciseId": "d1_g1",
+          "name": "Single Arm Cable Push Down",
+          "note": "",
+          "sets": [],
+          "rating": null,
+          "recommendation": null
+        },
+        {
+          "exerciseId": "d1_h1",
+          "name": "Seated Calf Raise",
+          "note": "",
+          "sets": [],
+          "rating": null,
+          "recommendation": null
+        }
+      ],
+      "completed": false
+    }
+  ],
   "recommendations": {},
   "currentWeek": 1,
   "currentDayIndex": 0,
-  "lastUpdated": "2026-04-05T13:15:38.890Z"
+  "lastUpdated": "2026-04-05T13:33:56.298Z"
 }
