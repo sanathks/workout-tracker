@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import WorkoutSession from './pages/WorkoutSession';
 import History from './pages/History';
 import Settings from './pages/Settings';
+import SyncStatus from './components/SyncStatus';
 
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(isLoggedIn());
@@ -13,6 +14,7 @@ export default function App() {
   const [syncing, setSyncing]   = useState(false);
 
   // On login: pull latest data from GitHub (works across all devices)
+  // If offline, this silently fails and we use local data
   useEffect(() => {
     if (!loggedIn) return;
     setSyncing(true);
@@ -36,17 +38,20 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh' }}>
 
-      {/* Sync indicator (top of screen) */}
+      {/* Persistent sync status bar */}
+      <SyncStatus />
+
+      {/* Loading indicator (initial cloud pull) */}
       {syncing && (
         <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
+          position: 'fixed', top: 28, left: 0, right: 0, zIndex: 199,
           background: 'rgba(251,191,36,0.15)',
           borderBottom: '1px solid #fbbf24',
-          padding: '6px 16px',
-          fontSize: '0.75rem', color: '#fbbf24', fontWeight: '600',
+          padding: '4px 16px',
+          fontSize: '0.7rem', color: '#fbbf24', fontWeight: '600',
           textAlign: 'center',
         }}>
-          🔄 Syncing data from GitHub...
+          Loading latest data from cloud...
         </div>
       )}
 

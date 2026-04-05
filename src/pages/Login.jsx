@@ -87,7 +87,6 @@ export default function Login({ onLogin }) {
         ))}
       </div>
 
-      <p style={{ color: 'var(--text-sub)', fontSize: '0.75rem' }}>Default PIN: 1234 (change in Settings)</p>
 
       <style>{`
         @keyframes shake {

@@ -1,13 +1,16 @@
 /**
  * storage.js
  *
- * Two-layer storage:
- *   1. localStorage  — instant reads/writes, works offline
- *   2. GitHub (via /api/data Netlify function) — persistent cloud backup
+ * Offline-first storage with reliable cloud sync:
+ *   1. localStorage — instant reads/writes, works offline, is the source of truth
+ *   2. syncQueue   — persistent queue that reliably pushes to GitHub via /api/data
+ *   3. GitHub      — durable backup, triggers Netlify redeploy
  *
- * On app load  → pull from GitHub → merge into localStorage
- * On every save → write localStorage immediately + push to GitHub async
+ * On app load  → pull from GitHub → merge into localStorage (if cloud is newer)
+ * On every save → write localStorage immediately + enqueue sync (non-blocking)
  */
+
+import { enqueueSync } from './syncQueue';
 
 const KEYS = {
   AUTH:            'wt_auth',
@@ -26,7 +29,7 @@ export const logout     = () => localStorage.removeItem(KEYS.AUTH);
 
 // ─── Settings ─────────────────────────────────────────────────────────────────
 export const getSettings  = () =>
-  JSON.parse(localStorage.getItem(KEYS.SETTINGS) || 'null') || { pin: '1234', apiKey: '' };
+  JSON.parse(localStorage.getItem(KEYS.SETTINGS) || 'null') || { pin: '1218', apiKey: '' };
 export const saveSettings = (s) =>
   localStorage.setItem(KEYS.SETTINGS, JSON.stringify(s));
 
@@ -53,7 +56,8 @@ export const saveSession = (session) => {
   const idx = sessions.findIndex(s => s.id === session.id);
   if (idx >= 0) sessions[idx] = session; else sessions.push(session);
   localStorage.setItem(KEYS.SESSIONS, JSON.stringify(sessions));
-  pushToCloud().catch(console.warn); // async, non-blocking
+  // Queue a cloud sync (non-blocking, survives offline + restarts)
+  enqueueSync('data', buildSnapshot());
 };
 
 export const createSession = (week, dayIndex, dayData) => ({
@@ -97,7 +101,7 @@ export const getRecommendedWeight = (exerciseId) => {
   return recs[exerciseId]?.weight ?? getLastWeightForExercise(exerciseId);
 };
 
-// ─── Cloud sync: full snapshot ─────────────────────────────────────────────────
+// ─── Snapshot: full state for cloud sync ───────────────────────────────────────
 function buildSnapshot() {
   return {
     sessions:        getSessions(),
@@ -118,18 +122,9 @@ function applySnapshot(snapshot) {
   if (snapshot.currentDayIndex != null) setCurrentDayIndex(snapshot.currentDayIndex);
 }
 
-// ─── Push to GitHub (via Netlify function) ────────────────────────────────────
+// ─── Push to GitHub (via sync queue) ──────────────────────────────────────────
 export const pushToCloud = async () => {
-  try {
-    const res = await fetch('/api/data?type=data', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(buildSnapshot()),
-    });
-    if (res.ok) localStorage.setItem(KEYS.LAST_SYNC, new Date().toISOString());
-  } catch (err) {
-    console.warn('Cloud push failed (offline?):', err.message);
-  }
+  enqueueSync('data', buildSnapshot());
 };
 
 // ─── Pull from GitHub on app load ─────────────────────────────────────────────
@@ -139,10 +134,21 @@ export const pullFromCloud = async () => {
     if (!res.ok) return false;
     const snapshot = await res.json();
     if (!snapshot?.lastUpdated) return false;
-    // Use cloud if it has more sessions than local
+
+    // Merge strategy: use whichever has more sessions
+    // (prevents overwriting local data if cloud is stale)
     const localCount = getSessions().length;
     const cloudCount = (snapshot.sessions || []).length;
-    if (cloudCount >= localCount) applySnapshot(snapshot);
+
+    if (cloudCount > localCount) {
+      applySnapshot(snapshot);
+    } else if (cloudCount === localCount && localCount > 0) {
+      // Same count — use whichever is newer
+      const localTime = new Date(localStorage.getItem(KEYS.LAST_SYNC) || 0).getTime();
+      const cloudTime = new Date(snapshot.lastUpdated || 0).getTime();
+      if (cloudTime > localTime) applySnapshot(snapshot);
+    }
+
     return true;
   } catch (err) {
     console.warn('Cloud pull failed (offline?):', err.message);
@@ -150,7 +156,7 @@ export const pullFromCloud = async () => {
   }
 };
 
-// ─── Pull AI recommendations pushed by Cowork task ───────────────────────────
+// ─── Pull AI recommendations ──────────────────────────────────────────────────
 export const pullRecommendationsFromCloud = async () => {
   try {
     const res = await fetch('/api/data?type=recommendations');
@@ -182,7 +188,7 @@ export const importData = (jsonString) => {
   try {
     const snapshot = JSON.parse(jsonString);
     applySnapshot(snapshot);
-    pushToCloud().catch(console.warn);
+    enqueueSync('data', buildSnapshot());
     return true;
   } catch {
     return false;

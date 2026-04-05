@@ -6,6 +6,7 @@ import {
   exportData, importData,
   pushToCloud, getLastSyncTime,
 } from '../utils/storage';
+import { forceSync, getSyncStatus, getPendingCount } from '../utils/syncQueue';
 
 export default function Settings({ onLogout }) {
   const [settings, setSettings] = useState(getSettings());
@@ -31,10 +32,12 @@ export default function Settings({ onLogout }) {
     setSyncing(true);
     setSyncMsg('');
     try {
+      // Push current state to queue, then force-flush
       await pushToCloud();
+      await forceSync();
       setSyncMsg('✅ Synced to GitHub successfully');
     } catch {
-      setSyncMsg('⚠️ Sync failed — check your internet connection');
+      setSyncMsg('⚠️ Sync failed — will retry automatically when online');
     } finally {
       setSyncing(false);
       setTimeout(() => setSyncMsg(''), 4000);
@@ -68,7 +71,7 @@ export default function Settings({ onLogout }) {
             value={settings.pin}
             onChange={e => setSettings(s => ({ ...s, pin: e.target.value }))}
             style={{ width: '100%', padding: '12px' }}
-            placeholder="1234"
+            placeholder="4 digits"
           />
         </div>
       </div>
@@ -103,6 +106,9 @@ export default function Settings({ onLogout }) {
             Last sync: {new Date(lastSync).toLocaleString()}
           </p>
         )}
+        <p style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>
+          Status: {getSyncStatus()} · {getPendingCount()} pending
+        </p>
         <button
           className="btn-ghost"
           onClick={handleManualSync}

@@ -3,8 +3,9 @@ import { workoutDays, weekConfig } from '../data/workoutPlan';
 import {
   getCurrentWeek, getCurrentDayIndex,
   createSession, saveSession, advanceToNextDay,
-  getRecommendedWeight, getSettings, pushToCloud,
+  getRecommendedWeight, getSettings,
 } from '../utils/storage';
+import { getSyncStatus } from '../utils/syncQueue';
 import { generateRecommendations } from '../utils/aiRecommendations';
 
 const RATINGS = [
@@ -69,21 +70,14 @@ export default function WorkoutSession({ onComplete }) {
   const finishWorkout = async () => {
     const completed = { ...session, completed: true };
     setSession(completed);
-    saveSession(completed);
+    saveSession(completed); // Saves locally + enqueues cloud sync automatically
     setPhase('summary');
 
-    // Step 1: Push to GitHub immediately so Netlify redeploys with latest data
-    setSyncing(true);
-    try {
-      await pushToCloud();
-      setSynced(true);
-    } catch {
-      setSynced(false);
-    } finally {
-      setSyncing(false);
-    }
+    // The sync queue handles pushing to GitHub reliably
+    // (retries with backoff, survives offline, resumes on reconnect)
+    setSynced(true); // We trust the queue
 
-    // Step 2: Generate AI recommendations
+    // Generate AI recommendations
     setAnalyzing(true);
     const { apiKey } = getSettings();
     const recs = await generateRecommendations(completed, apiKey);
@@ -285,6 +279,33 @@ function LogSetForm({ defaultWeight, setNum, onLog }) {
   );
 }
 
+function SyncBanner() {
+  const status = getSyncStatus();
+  const config = {
+    idle:    { icon: '✅', text: 'Saved & synced to GitHub', color: 'var(--primary)', bg: 'rgba(74,222,128,0.1)' },
+    syncing: { icon: '🔄', text: 'Syncing to GitHub...', color: '#fbbf24', bg: 'rgba(251,191,36,0.1)' },
+    pending: { icon: '⏳', text: 'Saved locally — will sync when online', color: '#fbbf24', bg: 'rgba(251,191,36,0.1)' },
+    offline: { icon: '📴', text: 'Saved locally — you\'re offline', color: 'var(--text-sub)', bg: 'rgba(136,136,136,0.1)' },
+    error:   { icon: '⚠️', text: 'Saved locally — sync will retry', color: '#f87171', bg: 'rgba(248,113,113,0.1)' },
+  };
+  const c = config[status] || config.idle;
+  return (
+    <div style={{
+      padding: '12px 16px', borderRadius: 'var(--radius-sm)',
+      background: c.bg, border: `1.5px solid ${c.color}`,
+      display: 'flex', alignItems: 'center', gap: '10px',
+      fontSize: '0.85rem', fontWeight: '500',
+    }}>
+      <span style={{ fontSize: '1.2rem' }}>{c.icon}</span>
+      <div>
+        <p style={{ color: c.color }}>{c.text}</p>
+        {status === 'idle' && <p style={{ color: 'var(--text-sub)', fontSize: '0.75rem', marginTop: '2px' }}>Your data is in your repo ✓</p>}
+        {status === 'offline' && <p style={{ color: 'var(--text-sub)', fontSize: '0.75rem', marginTop: '2px' }}>Will auto-sync when reconnected</p>}
+      </div>
+    </div>
+  );
+}
+
 function Summary({ session, recommendations, analyzing, syncing, synced, onDone, week }) {
   const nextWeek = Math.min(week + 1, 8);
 
@@ -296,26 +317,8 @@ function Summary({ session, recommendations, analyzing, syncing, synced, onDone,
         <p style={{ color: 'var(--text-sub)', marginTop: '4px' }}>{session.dayName}</p>
       </div>
 
-      {/* GitHub Sync Status Banner */}
-      <div style={{
-        padding: '12px 16px',
-        borderRadius: 'var(--radius-sm)',
-        background: syncing ? 'rgba(251,191,36,0.1)' : synced ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)',
-        border: `1.5px solid ${syncing ? '#fbbf24' : synced ? 'var(--primary)' : '#f87171'}`,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        fontSize: '0.85rem',
-        fontWeight: '500',
-      }}>
-        <span style={{ fontSize: '1.2rem' }}>{syncing ? '🔄' : synced ? '✅' : '⚠️'}</span>
-        <div>
-          <p style={{ color: syncing ? '#fbbf24' : synced ? 'var(--primary)' : '#f87171' }}>
-            {syncing ? 'Saving to GitHub...' : synced ? 'Saved to GitHub — Netlify is redeploying' : 'Saved locally (offline — will sync when connected)'}
-          </p>
-          {synced && <p style={{ color: 'var(--text-sub)', fontSize: '0.75rem', marginTop: '2px' }}>Your data is now in your repo ✓</p>}
-        </div>
-      </div>
+      {/* Sync Status Banner */}
+      <SyncBanner />
 
       {/* Exercises summary */}
       <div>
