@@ -216,11 +216,11 @@
           "recommendation": null
         }
       ],
-      "completed": false
+      "completed": true
     }
   ],
   "recommendations": {},
   "currentWeek": 1,
   "currentDayIndex": 0,
-  "lastUpdated": "2026-04-05T14:58:05.759Z"
+  "lastUpdated": "2026-04-05T14:58:06.693Z"
 }
