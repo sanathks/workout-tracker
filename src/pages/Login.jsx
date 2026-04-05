@@ -30,16 +30,19 @@ export default function Login({ onLogin }) {
   return (
     <div style={{
       minHeight: '100vh',
+      minHeight: '100dvh',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '24px',
-      gap: '40px',
+      paddingTop: 'calc(24px + var(--safe-top))',
+      paddingBottom: 'calc(24px + var(--safe-bottom))',
+      gap: '32px',
     }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: '3rem', marginBottom: '8px' }}>🏋️</div>
-        <h1 style={{ fontSize: '1.6rem', marginBottom: '4px' }}>Sanath's Gym</h1>
+        <h1 style={{ marginBottom: '4px' }}>Sanath's Gym</h1>
         <p style={{ color: 'var(--text-sub)', fontSize: '0.9rem' }}>Enter your PIN to continue</p>
       </div>
 
@@ -47,28 +50,32 @@ export default function Login({ onLogin }) {
       <div style={{ display: 'flex', gap: '16px', animation: shake ? 'shake 0.4s' : '' }}>
         {[0,1,2,3].map(i => (
           <div key={i} style={{
-            width: '16px', height: '16px',
+            width: '14px', height: '14px',
             borderRadius: '50%',
             background: pin.length > i ? 'var(--primary)' : 'var(--border)',
-            transition: 'background 0.2s',
+            transition: 'background 0.15s, transform 0.15s',
+            transform: pin.length > i ? 'scale(1.2)' : 'scale(1)',
           }} />
         ))}
       </div>
 
-      {error && <p style={{ color: 'var(--danger)', fontSize: '0.85rem' }}>{error}</p>}
+      {error && <p style={{ color: 'var(--danger)', fontSize: '0.85rem', marginTop: '-16px' }}>{error}</p>}
 
-      {/* Numpad */}
+      {/* Numpad — fills available width up to 280px */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(3, 80px)',
-        gap: '12px',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: '10px',
+        width: '100%',
+        maxWidth: '280px',
       }}>
         {digits.map((d, i) => (
           <button
             key={i}
             onClick={() => d === '⌫' ? handleDelete() : d ? handleDigit(d) : null}
             style={{
-              height: '72px',
+              aspectRatio: '1.2',
+              minHeight: '60px',
               borderRadius: 'var(--radius)',
               background: d === '⌫' ? 'transparent' : 'var(--surface)',
               border: d === '⌫' ? 'none' : '1.5px solid var(--border)',
@@ -86,17 +93,6 @@ export default function Login({ onLogin }) {
           </button>
         ))}
       </div>
-
-
-      <style>{`
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          20% { transform: translateX(-10px); }
-          40% { transform: translateX(10px); }
-          60% { transform: translateX(-8px); }
-          80% { transform: translateX(8px); }
-        }
-      `}</style>
     </div>
   );
 }

@@ -128,7 +128,7 @@ export default function WorkoutSession({ dayIndex: selectedDayIndex, resumeSessi
       </div>
 
       {/* Exercise tabs */}
-      <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+      <div className="scroll-h">
         {today.exercises.map((ex, i) => {
           const exSession = session.exercises[i];
           const done = exSession?.rating != null;

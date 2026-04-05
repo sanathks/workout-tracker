@@ -1,4 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#0d0d0d"/>
-  <text x="256" y="320" font-size="280" text-anchor="middle" fill="#4ade80">🏋️</text>
+  <rect width="512" height="512" rx="112" fill="#0d0d0d"/>
+  <!-- Dumbbell icon - clean geometric -->
+  <!-- Outer left plate -->
+  <rect x="112" y="192" width="32" height="128" rx="8" fill="#ffffff"/>
+  <!-- Inner left plate -->
+  <rect x="152" y="212" width="28" height="88" rx="6" fill="#ffffff"/>
+  <!-- Bar -->
+  <rect x="180" y="240" width="152" height="32" rx="6" fill="#ffffff"/>
+  <!-- Inner right plate -->
+  <rect x="332" y="212" width="28" height="88" rx="6" fill="#ffffff"/>
+  <!-- Outer right plate -->
+  <rect x="368" y="192" width="32" height="128" rx="8" fill="#ffffff"/>
 </svg>
