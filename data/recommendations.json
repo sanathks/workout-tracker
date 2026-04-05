@@ -1,1 +1,38 @@
-{}
+{
+  "d1_a1": {
+    "weight": 12.5,
+    "reason": "Good + all reps \u2014 small increase",
+    "source": "cowork-ai",
+    "generatedAt": "2026-04-05T21:00:38.882096+00:00"
+  },
+  "d1_b1": {
+    "weight": 32.5,
+    "reason": "Good + all reps \u2014 small increase",
+    "source": "cowork-ai",
+    "generatedAt": "2026-04-05T21:00:38.882096+00:00"
+  },
+  "d1_c1": {
+    "weight": 10,
+    "reason": "Incomplete \u2014 hold weight",
+    "source": "cowork-ai",
+    "generatedAt": "2026-04-05T21:00:38.882096+00:00"
+  },
+  "d1_d1": {
+    "weight": 7.5,
+    "reason": "Good + all reps \u2014 small increase",
+    "source": "cowork-ai",
+    "generatedAt": "2026-04-05T21:00:38.882096+00:00"
+  },
+  "d1_f1": {
+    "weight": 12.5,
+    "reason": "Good + all reps \u2014 small increase",
+    "source": "cowork-ai",
+    "generatedAt": "2026-04-05T21:00:38.882096+00:00"
+  },
+  "d1_h1": {
+    "weight": 7.5,
+    "reason": "Good + all reps, min 2.5 kg bump",
+    "source": "cowork-ai",
+    "generatedAt": "2026-04-05T21:00:38.882096+00:00"
+  }
+}
