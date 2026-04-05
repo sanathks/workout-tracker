@@ -140,7 +140,12 @@
           "exerciseId": "d1_d1",
           "name": "Standing DB Lateral Raise",
           "note": "",
-          "sets": [],
+          "sets": [
+            {
+              "weight": 6,
+              "reps": 8
+            }
+          ],
           "rating": null,
           "recommendation": null
         },
@@ -183,5 +188,5 @@
   "recommendations": {},
   "currentWeek": 1,
   "currentDayIndex": 0,
-  "lastUpdated": "2026-04-05T14:27:43.518Z"
+  "lastUpdated": "2026-04-05T14:35:33.460Z"
 }
