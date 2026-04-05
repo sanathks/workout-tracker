@@ -12,6 +12,7 @@ export default function App() {
   const [screen, setScreen]     = useState('dashboard');
   const [tab, setTab]           = useState('dashboard');
   const [syncing, setSyncing]   = useState(false);
+  const [workoutDayIndex, setWorkoutDayIndex] = useState(null);
 
   // On login: pull latest data from GitHub (works across all devices)
   // If offline, this silently fails and we use local data
@@ -56,10 +57,10 @@ export default function App() {
       )}
 
       {screen === 'dashboard' && (
-        <Dashboard onStartWorkout={() => setScreen('workout')} onNavigate={navigate} />
+        <Dashboard onStartWorkout={(dayIdx) => { setWorkoutDayIndex(dayIdx); setScreen('workout'); }} onNavigate={navigate} />
       )}
       {screen === 'workout' && (
-        <WorkoutSession onComplete={() => navigate('dashboard')} />
+        <WorkoutSession dayIndex={workoutDayIndex} onComplete={() => { setWorkoutDayIndex(null); navigate('dashboard'); }} />
       )}
       {screen === 'history'  && <History />}
       {screen === 'settings' && (
@@ -77,9 +78,9 @@ export default function App() {
             <span>Home</span>
           </button>
 
-          {/* Centre FAB — start workout */}
+          {/* Centre FAB — start workout (uses suggested next day) */}
           <button
-            onClick={() => navigate('workout')}
+            onClick={() => { setWorkoutDayIndex(null); setScreen('workout'); }}
             style={{
               background: 'var(--primary)', color: '#000',
               width: '60px', height: '60px', borderRadius: '50%',

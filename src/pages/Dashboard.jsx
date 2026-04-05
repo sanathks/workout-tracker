@@ -4,13 +4,13 @@ import { getCurrentWeek, getCurrentDayIndex, getSessions, getRecommendedWeight }
 
 export default function Dashboard({ onStartWorkout, onNavigate }) {
   const week = getCurrentWeek();
-  const dayIndex = getCurrentDayIndex();
-  const today = workoutDays[dayIndex];
+  const nextDayIndex = getCurrentDayIndex();
   const wkCfg = weekConfig[week - 1];
   const sessions = getSessions();
   const completedSessions = sessions.filter(s => s.completed).length;
+  const progressPct = Math.round((completedSessions / 32) * 100);
 
-  const progressPct = Math.round((completedSessions / 32) * 100); // 4 days × 8 weeks
+  const [expandedDay, setExpandedDay] = useState(nextDayIndex);
 
   return (
     <div className="page gap-4">
@@ -46,63 +46,93 @@ export default function Dashboard({ onStartWorkout, onNavigate }) {
           <div style={{ width: `${progressPct}%`, height: '100%', background: 'var(--primary)', borderRadius: '100px', transition: 'width 0.5s' }} />
         </div>
         <p style={{ color: 'var(--text-sub)', fontSize: '0.8rem', marginTop: '8px' }}>
-          {32 - completedSessions} sessions remaining
+          {wkCfg.sets} sets × {wkCfg.reps} reps · {wkCfg.rest} rest · RPE {wkCfg.rpe}
         </p>
       </div>
 
-      {/* Today's Workout */}
+      {/* Workout Day Picker */}
       <div>
-        <p style={{ color: 'var(--text-sub)', fontSize: '0.8rem', marginBottom: '12px', fontWeight: '600', letterSpacing: '0.05em' }}>TODAY'S WORKOUT</p>
-        <div className="card" style={{ borderColor: 'rgba(74,222,128,0.3)' }}>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '16px' }}>
-            <span style={{ fontSize: '2rem' }}>{today.emoji}</span>
-            <div>
-              <h2 style={{ lineHeight: 1.2, marginBottom: '6px' }}>{today.name}</h2>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                <span className="tag tag-green">Week {week}</span>
-                <span className="tag">{wkCfg.sets} sets × {wkCfg.reps} reps</span>
-                <span className="tag">{wkCfg.rest} rest</span>
-              </div>
-            </div>
-          </div>
+        <p style={{ color: 'var(--text-sub)', fontSize: '0.8rem', marginBottom: '12px', fontWeight: '600', letterSpacing: '0.05em' }}>
+          CHOOSE WORKOUT
+        </p>
 
-          {/* Exercise list preview */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-            {today.exercises.map((ex, i) => {
-              const rec = getRecommendedWeight(ex.id);
-              return (
-                <div key={ex.id} style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '10px 14px',
-                  background: 'var(--surface2)',
-                  borderRadius: 'var(--radius-sm)',
-                }}>
-                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <span style={{ color: 'var(--text-sub)', fontWeight: '700', fontSize: '0.8rem', minWidth: '24px' }}>{ex.code}</span>
+        <div className="gap-3">
+          {workoutDays.map((day, idx) => {
+            const isNext = idx === nextDayIndex;
+            const isExpanded = idx === expandedDay;
+
+            return (
+              <div key={day.day} className="card" style={{
+                borderColor: isNext ? 'rgba(74,222,128,0.3)' : 'var(--border)',
+                padding: 0,
+                overflow: 'hidden',
+              }}>
+                {/* Day header — always visible, tappable */}
+                <button
+                  onClick={() => setExpandedDay(isExpanded ? null : idx)}
+                  style={{
+                    width: '100%', padding: '16px 20px', background: 'none',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    textAlign: 'left',
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <span style={{ fontSize: '1.6rem' }}>{day.emoji}</span>
                     <div>
-                      <p style={{ fontSize: '0.9rem', fontWeight: '500' }}>{ex.name}</p>
-                      {ex.note && <p style={{ color: 'var(--text-sub)', fontSize: '0.75rem' }}>{ex.note}</p>}
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <h3 style={{ fontSize: '1rem' }}>{day.name}</h3>
+                      </div>
+                      <p style={{ color: 'var(--text-sub)', fontSize: '0.8rem', marginTop: '2px' }}>
+                        {day.exercises.length} exercises
+                      </p>
                     </div>
                   </div>
-                  {rec && (
-                    <span style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: '700', whiteSpace: 'nowrap' }}>
-                      {rec}kg
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {isNext && <span className="tag tag-green" style={{ fontSize: '0.7rem' }}>Next up</span>}
+                    <span style={{ color: 'var(--text-sub)', fontSize: '0.9rem' }}>{isExpanded ? '▲' : '▼'}</span>
+                  </div>
+                </button>
 
-          <p style={{ color: 'var(--text-sub)', fontSize: '0.8rem', marginBottom: '16px', textAlign: 'center' }}>
-            Target RPE: <strong style={{ color: 'var(--text)' }}>{wkCfg.rpe}</strong> · Tempo: <strong style={{ color: 'var(--text)' }}>{wkCfg.tempo}</strong>
-          </p>
+                {/* Expanded: exercise list + start button */}
+                {isExpanded && (
+                  <div style={{ borderTop: '1.5px solid var(--border)', padding: '16px 20px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                      {day.exercises.map((ex) => {
+                        const rec = getRecommendedWeight(ex.id);
+                        return (
+                          <div key={ex.id} style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '10px 14px',
+                            background: 'var(--surface2)',
+                            borderRadius: 'var(--radius-sm)',
+                          }}>
+                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                              <span style={{ color: 'var(--text-sub)', fontWeight: '700', fontSize: '0.8rem', minWidth: '24px' }}>{ex.code}</span>
+                              <div>
+                                <p style={{ fontSize: '0.9rem', fontWeight: '500' }}>{ex.name}</p>
+                                {ex.note && <p style={{ color: 'var(--text-sub)', fontSize: '0.75rem' }}>{ex.note}</p>}
+                              </div>
+                            </div>
+                            {rec && (
+                              <span style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: '700', whiteSpace: 'nowrap' }}>
+                                {rec}kg
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
 
-          <button className="btn-primary" onClick={onStartWorkout}>
-            Start Workout →
-          </button>
+                    <button className="btn-primary" onClick={() => onStartWorkout(idx)}>
+                      Start {day.name.split(' — ')[0]} →
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 

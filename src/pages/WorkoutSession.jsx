@@ -15,9 +15,9 @@ const RATINGS = [
   { key: 'failed',   label: 'Failed',   emoji: '💀', color: '#f87171', desc: 'Missed some reps' },
 ];
 
-export default function WorkoutSession({ onComplete }) {
+export default function WorkoutSession({ dayIndex: selectedDayIndex, onComplete }) {
   const week = getCurrentWeek();
-  const dayIndex = getCurrentDayIndex();
+  const dayIndex = selectedDayIndex != null ? selectedDayIndex : getCurrentDayIndex();
   const today = workoutDays[dayIndex];
   const wkCfg = weekConfig[week - 1];
 
