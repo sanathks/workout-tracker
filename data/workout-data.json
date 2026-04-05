@@ -85,7 +85,12 @@
           "exerciseId": "d1_a1",
           "name": "30° Incline DB Bench Press",
           "note": "Semi pronated grip",
-          "sets": [],
+          "sets": [
+            {
+              "weight": 12,
+              "reps": 8
+            }
+          ],
           "rating": null,
           "recommendation": null
         },
@@ -152,5 +157,5 @@
   "recommendations": {},
   "currentWeek": 1,
   "currentDayIndex": 0,
-  "lastUpdated": "2026-04-05T14:12:36.370Z"
+  "lastUpdated": "2026-04-05T14:13:56.445Z"
 }
