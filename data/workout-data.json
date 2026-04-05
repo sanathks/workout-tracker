@@ -148,6 +148,10 @@
             {
               "weight": 6,
               "reps": 8
+            },
+            {
+              "weight": 6,
+              "reps": 8
             }
           ],
           "rating": null,
@@ -192,5 +196,5 @@
   "recommendations": {},
   "currentWeek": 1,
   "currentDayIndex": 0,
-  "lastUpdated": "2026-04-05T14:35:36.189Z"
+  "lastUpdated": "2026-04-05T14:35:37.907Z"
 }
