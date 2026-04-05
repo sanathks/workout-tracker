@@ -169,7 +169,12 @@
           "exerciseId": "d1_f1",
           "name": "Rope Tricep Push Down",
           "note": "",
-          "sets": [],
+          "sets": [
+            {
+              "weight": 10,
+              "reps": 12
+            }
+          ],
           "rating": null,
           "recommendation": null
         },
@@ -196,5 +201,5 @@
   "recommendations": {},
   "currentWeek": 1,
   "currentDayIndex": 0,
-  "lastUpdated": "2026-04-05T14:35:40.623Z"
+  "lastUpdated": "2026-04-05T14:37:36.620Z"
 }
