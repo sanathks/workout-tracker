@@ -49,10 +49,12 @@ export default function SyncStatus({ style }) {
 
   return (
     <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
+      position: 'fixed', bottom: 'calc(60px + var(--safe-bottom, 0px))', left: '16px', right: '16px',
+      zIndex: 200,
       background: cfg.bg,
-      borderBottom: `1px solid ${cfg.color}`,
-      padding: '6px 16px',
+      border: `1px solid ${cfg.color}`,
+      borderRadius: 'var(--radius)',
+      padding: '8px 16px',
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
       fontSize: '0.75rem', color: cfg.color, fontWeight: '600',
       transition: 'all 0.3s ease',

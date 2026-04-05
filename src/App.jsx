@@ -40,18 +40,7 @@ export default function App() {
     <div style={{ minHeight: '100vh' }}>
       <SyncStatus />
 
-      {syncing && (
-        <div style={{
-          position: 'fixed', top: 28, left: 0, right: 0, zIndex: 199,
-          background: 'rgba(251,191,36,0.15)',
-          borderBottom: '1px solid #fbbf24',
-          padding: '4px 16px',
-          fontSize: '0.7rem', color: '#fbbf24', fontWeight: '600',
-          textAlign: 'center',
-        }}>
-          Loading latest data from cloud...
-        </div>
-      )}
+
 
       {screen === 'dashboard' && (
         <Dashboard
