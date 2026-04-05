@@ -99,7 +99,7 @@
               "reps": 8
             }
           ],
-          "rating": null,
+          "rating": "good",
           "recommendation": null
         },
         {
@@ -165,5 +165,5 @@
   "recommendations": {},
   "currentWeek": 1,
   "currentDayIndex": 0,
-  "lastUpdated": "2026-04-05T14:18:37.380Z"
+  "lastUpdated": "2026-04-05T14:18:40.587Z"
 }
