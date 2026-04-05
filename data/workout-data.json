@@ -1,8 +1,8 @@
 {
   "sessions": [
     {
-      "id": "1775394603195",
-      "date": "2026-04-05T13:10:03.195Z",
+      "id": "1775393414034",
+      "date": "2026-04-05T12:50:14.034Z",
       "week": 1,
       "dayIndex": 0,
       "dayName": "Push — Chest / Shoulders / Triceps / Calves",
@@ -11,8 +11,21 @@
           "exerciseId": "d1_a1",
           "name": "30° Incline DB Bench Press",
           "note": "Semi pronated grip",
-          "sets": [],
-          "rating": null,
+          "sets": [
+            {
+              "weight": 13,
+              "reps": 8
+            },
+            {
+              "weight": 13,
+              "reps": 8
+            },
+            {
+              "weight": 13,
+              "reps": 8
+            }
+          ],
+          "rating": "good",
           "recommendation": null
         },
         {
@@ -67,16 +80,29 @@
           "exerciseId": "d1_h1",
           "name": "Seated Calf Raise",
           "note": "",
-          "sets": [],
-          "rating": null,
+          "sets": [
+            {
+              "weight": 34,
+              "reps": 8
+            },
+            {
+              "weight": 34,
+              "reps": 8
+            },
+            {
+              "weight": 34,
+              "reps": 8
+            }
+          ],
+          "rating": "good",
           "recommendation": null
         }
       ],
-      "completed": false
+      "completed": true
     },
     {
-      "id": "1775394754913",
-      "date": "2026-04-05T13:12:34.913Z",
+      "id": "1775394803843",
+      "date": "2026-04-05T13:13:23.843Z",
       "week": 1,
       "dayIndex": 0,
       "dayName": "Push — Chest / Shoulders / Triceps / Calves",
@@ -149,8 +175,19 @@
       "completed": false
     }
   ],
-  "recommendations": {},
+  "recommendations": {
+    "d1_a1": {
+      "weight": 15,
+      "reason": "Solid — small increase to keep progressing",
+      "source": "rule"
+    },
+    "d1_h1": {
+      "weight": 37.5,
+      "reason": "Solid — small increase to keep progressing",
+      "source": "rule"
+    }
+  },
   "currentWeek": 1,
   "currentDayIndex": 0,
-  "lastUpdated": "2026-04-05T13:12:34.917Z"
+  "lastUpdated": "2026-04-05T13:13:23.848Z"
 }
