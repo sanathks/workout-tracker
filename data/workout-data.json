@@ -217,41 +217,105 @@
         }
       ],
       "completed": true
+    },
+    {
+      "id": "1775753370604",
+      "date": "2026-04-09T16:49:30.604Z",
+      "week": 1,
+      "dayIndex": 2,
+      "dayName": "Legs — Quads / Hamstrings / Calves",
+      "exercises": [
+        {
+          "exerciseId": "d3_a1",
+          "name": "Air Squats",
+          "note": "",
+          "sets": [],
+          "rating": null,
+          "recommendation": null
+        },
+        {
+          "exerciseId": "d3_b1",
+          "name": "Leg Press",
+          "note": "Pin loaded",
+          "sets": [],
+          "rating": null,
+          "recommendation": null
+        },
+        {
+          "exerciseId": "d3_c1",
+          "name": "Leg Extension",
+          "note": "Plantar flexed",
+          "sets": [],
+          "rating": null,
+          "recommendation": null
+        },
+        {
+          "exerciseId": "d3_d1",
+          "name": "Lying Leg Curls",
+          "note": "Dorsi flexed",
+          "sets": [],
+          "rating": null,
+          "recommendation": null
+        },
+        {
+          "exerciseId": "d3_e1",
+          "name": "DB Romanian Deadlift",
+          "note": "",
+          "sets": [],
+          "rating": null,
+          "recommendation": null
+        },
+        {
+          "exerciseId": "d3_f1",
+          "name": "Seated Calf Raise",
+          "note": "",
+          "sets": [],
+          "rating": null,
+          "recommendation": null
+        }
+      ],
+      "completed": false
     }
   ],
   "recommendations": {
     "d1_a1": {
       "weight": 15,
-      "reason": "Solid — small increase to keep progressing",
-      "source": "rule"
+      "reason": "Good + all reps — +5% increase",
+      "source": "cowork-ai",
+      "generatedAt": "2026-04-07T19:11:03.536639Z"
     },
     "d1_b1": {
       "weight": 35,
-      "reason": "Solid — small increase to keep progressing",
-      "source": "rule"
+      "reason": "Good + all reps — +5% increase",
+      "source": "cowork-ai",
+      "generatedAt": "2026-04-07T19:11:03.536639Z"
     },
     "d1_c1": {
       "weight": 10,
-      "reason": "",
-      "source": "rule"
+      "reason": "No rating — hold weight",
+      "source": "cowork-ai",
+      "generatedAt": "2026-04-07T19:11:03.536639Z"
     },
     "d1_d1": {
       "weight": 7.5,
-      "reason": "Solid — small increase to keep progressing",
-      "source": "rule"
+      "reason": "Good + all reps — +5% increase",
+      "source": "cowork-ai",
+      "generatedAt": "2026-04-07T19:11:03.536639Z"
     },
     "d1_f1": {
       "weight": 12.5,
-      "reason": "Solid — small increase to keep progressing",
-      "source": "rule"
+      "reason": "Good + all reps — +5% increase",
+      "source": "cowork-ai",
+      "generatedAt": "2026-04-07T19:11:03.536639Z"
     },
     "d1_h1": {
       "weight": 7.5,
-      "reason": "Solid — small increase to keep progressing",
-      "source": "rule"
+      "reason": "Good + all reps — +5% increase",
+      "source": "cowork-ai",
+      "generatedAt": "2026-04-07T19:11:03.536639Z"
     }
   },
   "currentWeek": 1,
   "currentDayIndex": 0,
-  "lastUpdated": "2026-04-05T14:58:06.699Z"
+  "lastUpdated": "2026-04-09T16:49:30.620Z"
 }
