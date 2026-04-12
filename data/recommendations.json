@@ -1,38 +1,38 @@
 {
   "d1_a1": {
-    "weight": 15.0,
-    "reason": "Good + all reps — +5% increase",
+    "weight": 12.5,
+    "reason": "Good + all reps \u2014 +5% increase",
     "source": "cowork-ai",
-    "generatedAt": "2026-04-07T19:11:03.536639Z"
+    "generatedAt": "2026-04-12T16:29:05.254401Z"
   },
   "d1_b1": {
-    "weight": 35.0,
-    "reason": "Good + all reps — +5% increase",
+    "weight": 32.5,
+    "reason": "Good + all reps \u2014 +5% increase",
     "source": "cowork-ai",
-    "generatedAt": "2026-04-07T19:11:03.536639Z"
+    "generatedAt": "2026-04-12T16:29:05.254401Z"
   },
   "d1_c1": {
     "weight": 10.0,
-    "reason": "No rating — hold weight",
+    "reason": "No rating \u2014 hold weight",
     "source": "cowork-ai",
-    "generatedAt": "2026-04-07T19:11:03.536639Z"
+    "generatedAt": "2026-04-12T16:29:05.254401Z"
   },
   "d1_d1": {
     "weight": 7.5,
-    "reason": "Good + all reps — +5% increase",
+    "reason": "Good + all reps \u2014 +5% increase",
     "source": "cowork-ai",
-    "generatedAt": "2026-04-07T19:11:03.536639Z"
+    "generatedAt": "2026-04-12T16:29:05.254401Z"
   },
   "d1_f1": {
     "weight": 12.5,
-    "reason": "Good + all reps — +5% increase",
+    "reason": "Good + all reps \u2014 +5% increase",
     "source": "cowork-ai",
-    "generatedAt": "2026-04-07T19:11:03.536639Z"
+    "generatedAt": "2026-04-12T16:29:05.254401Z"
   },
   "d1_h1": {
-    "weight": 7.5,
-    "reason": "Good + all reps — +5% increase",
+    "weight": 5.0,
+    "reason": "Good + all reps \u2014 +5% increase (held, min increment)",
     "source": "cowork-ai",
-    "generatedAt": "2026-04-07T19:11:03.536639Z"
+    "generatedAt": "2026-04-12T16:29:05.254401Z"
   }
 }
